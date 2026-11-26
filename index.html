@@ -1,0 +1,2042 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StokIn - Validator Ide Matriks Prioritas (Feasibility vs Impact)</title>
+    <meta name="description"
+        content="Aplikasi Validator Ide Matriks Prioritas menggunakan logika kuadran Feasibility vs Impact untuk StokIn - Sinkronisasi Stok Kasir & Marketplace.">
+
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Palette: Clean Modern SaaS Light Theme (Default) */
+            --stokin-bg: #f8fafc;
+            --stokin-surface: #ffffff;
+            --stokin-header-bg: #ffffff;
+            --stokin-card-header: #ffffff;
+            --stokin-card-subtle: #f8fafc;
+            --stokin-border: #e2e8f0;
+            --stokin-border-subtle: #f1f5f9;
+            --stokin-text-primary: #0f172a;
+            --stokin-text-secondary: #334155;
+            --stokin-text-muted: #64748b;
+            --stokin-input-bg: #ffffff;
+            --stokin-input-border: #cbd5e1;
+            --stokin-hover-bg: #f8fafc;
+            --stokin-modal-bg: #ffffff;
+            --stokin-kpi-bar-track: #f1f5f9;
+            --stokin-badge-bg: #f1f5f9;
+            --stokin-badge-text: #475569;
+            --stokin-pill-group-bg: #f1f5f9;
+            --stokin-toast-bg: #ffffff;
+            --stokin-toast-text: #0f172a;
+
+            --stokin-teal-900: #134e4a;
+            --stokin-teal-800: #115e59;
+            --stokin-teal-700: #0f766e;
+            --stokin-teal-600: #0d9488;
+            --stokin-teal-500: #14b8a6;
+            --stokin-teal-200: #99f6e4;
+            --stokin-teal-100: #ccfbf1;
+            --stokin-teal-50: #f0fdfa;
+
+            /* Quadrant Accents (Light) */
+            --q1-emerald: #059669;
+            --q1-bg: #ecfdf5;
+            --q1-border: #a7f3d0;
+            --q1-text: #065f46;
+
+            --q2-blue: #2563eb;
+            --q2-bg: #eff6ff;
+            --q2-border: #bfdbfe;
+            --q2-text: #1e40af;
+
+            --q3-amber: #d97706;
+            --q3-bg: #fffbeb;
+            --q3-border: #fde68a;
+            --q3-text: #92400e;
+
+            --q4-slate: #64748b;
+            --q4-bg: #f8fafc;
+            --q4-border: #e2e8f0;
+            --q4-text: #475569;
+
+            --hero-mvp-bg: linear-gradient(135deg, #f0fdfa 0%, #ffffff 50%, #f0fdf4 100%);
+            --hero-mvp-border: #99f6e4;
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+
+            --shadow-subtle: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+            --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
+            --shadow-hover: 0 8px 24px -4px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
+            --shadow-elevated: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
+
+            --ease-out-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Dark Theme Variables (Modern Deep Slate / Non-Cyber) */
+        [data-theme="dark"] {
+            --stokin-bg: #090e17;
+            --stokin-surface: #0f172a;
+            --stokin-header-bg: #0b1120;
+            --stokin-card-header: #0f172a;
+            --stokin-card-subtle: #1e293b;
+            --stokin-border: #1e293b;
+            --stokin-border-subtle: #1e293b;
+            --stokin-text-primary: #f8fafc;
+            --stokin-text-secondary: #cbd5e1;
+            --stokin-text-muted: #94a3b8;
+            --stokin-input-bg: #0b1120;
+            --stokin-input-border: #334155;
+            --stokin-hover-bg: #1e293b;
+            --stokin-modal-bg: #0f172a;
+            --stokin-kpi-bar-track: #1e293b;
+            --stokin-badge-bg: #1e293b;
+            --stokin-badge-text: #cbd5e1;
+            --stokin-pill-group-bg: #1e293b;
+            --stokin-toast-bg: #1e293b;
+            --stokin-toast-text: #f8fafc;
+
+            /* Quadrant Accents (Dark) */
+            --q1-emerald: #10b981;
+            --q1-bg: rgba(16, 185, 129, 0.12);
+            --q1-border: rgba(16, 185, 129, 0.3);
+            --q1-text: #6ee7b7;
+
+            --q2-blue: #3b82f6;
+            --q2-bg: rgba(59, 130, 246, 0.12);
+            --q2-border: rgba(59, 130, 246, 0.3);
+            --q2-text: #93c5fd;
+
+            --q3-amber: #f59e0b;
+            --q3-bg: rgba(245, 158, 11, 0.12);
+            --q3-border: rgba(245, 158, 11, 0.3);
+            --q3-text: #fcd34d;
+
+            --q4-slate: #94a3b8;
+            --q4-bg: rgba(148, 163, 184, 0.1);
+            --q4-border: rgba(148, 163, 184, 0.25);
+            --q4-text: #cbd5e1;
+
+            --hero-mvp-bg: linear-gradient(145deg, #09121d 0%, #0f252a 55%, #0f3536 100%);
+            --hero-mvp-border: rgba(20, 184, 166, 0.35);
+
+            --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow-card: 0 2px 5px rgba(0, 0, 0, 0.35);
+            --shadow-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.45);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--stokin-bg);
+            color: var(--stokin-text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background-color 0.25s var(--ease-out-smooth), color 0.25s var(--ease-out-smooth);
+        }
+
+        /* Focus Ring Accessibility */
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible {
+            outline: 2px solid var(--stokin-teal-600);
+            outline-offset: 2px;
+        }
+
+        /* Top Header */
+        .stokin-header {
+            background-color: var(--stokin-header-bg);
+            border-bottom: 1px solid var(--stokin-border);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+            position: relative;
+            z-index: 30;
+            transition: background-color 0.25s var(--ease-out-smooth), border-color 0.25s var(--ease-out-smooth);
+        }
+
+        .brand-icon-box {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--stokin-teal-600) 0%, var(--stokin-teal-700) 100%);
+            border: 1px solid var(--stokin-teal-500);
+            border-radius: var(--radius-md);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 1.25rem;
+            box-shadow: 0 3px 10px rgba(13, 148, 136, 0.22);
+            transition: transform 0.25s var(--ease-out-smooth);
+        }
+
+        .brand-link:hover .brand-icon-box {
+            transform: scale(1.04);
+        }
+
+        /* Nav Pills */
+        .nav-pill-group {
+            background-color: var(--stokin-pill-group-bg);
+            border: 1px solid var(--stokin-border);
+            border-radius: 12px;
+            padding: 4px;
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .nav-pill-btn {
+            color: var(--stokin-text-muted);
+            text-decoration: none;
+            font-size: 0.84rem;
+            font-weight: 600;
+            padding: 0.45rem 0.95rem;
+            border-radius: 8px;
+            transition: all 0.2s var(--ease-out-smooth);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-pill-btn:hover {
+            color: var(--stokin-text-primary);
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .nav-pill-btn.active {
+            color: var(--stokin-teal-600);
+            background-color: var(--stokin-surface);
+            font-weight: 700;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Theme Toggle Button */
+        .btn-theme-toggle {
+            background-color: var(--stokin-surface);
+            color: var(--stokin-text-secondary);
+            border: 1px solid var(--stokin-border);
+            border-radius: 10px;
+            padding: 0.52rem 0.85rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            cursor: pointer;
+            transition: all 0.2s var(--ease-out-smooth);
+        }
+
+        .btn-theme-toggle:hover {
+            background-color: var(--stokin-hover-bg);
+            color: var(--stokin-text-primary);
+            border-color: var(--stokin-teal-600);
+            transform: translateY(-1px);
+        }
+
+        /* Buttons Modern */
+        .btn-modern-primary {
+            background-color: var(--stokin-teal-600);
+            color: #ffffff;
+            border: 1px solid var(--stokin-teal-700);
+            font-weight: 600;
+            font-size: 0.875rem;
+            padding: 0.55rem 1.15rem;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s var(--ease-out-smooth);
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+        }
+
+        .btn-modern-primary:hover {
+            background-color: var(--stokin-teal-700);
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+        }
+
+        .btn-modern-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-modern-outline {
+            background-color: var(--stokin-surface);
+            color: var(--stokin-text-secondary);
+            border: 1px solid var(--stokin-border);
+            font-weight: 600;
+            font-size: 0.84rem;
+            padding: 0.52rem 0.95rem;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            transition: all 0.2s var(--ease-out-smooth);
+        }
+
+        .btn-modern-outline:hover {
+            background-color: var(--stokin-hover-bg);
+            color: var(--stokin-text-primary);
+            border-color: var(--stokin-slate-400);
+            transform: translateY(-1px);
+        }
+
+        .btn-modern-danger-outline {
+            background-color: var(--stokin-surface);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            font-weight: 600;
+            font-size: 0.84rem;
+            padding: 0.52rem 0.85rem;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            transition: all 0.2s var(--ease-out-smooth);
+        }
+
+        .btn-modern-danger-outline:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #b91c1c;
+            border-color: #ef4444;
+        }
+
+        /* Modern Card Container */
+        .modern-card {
+            background: var(--stokin-surface);
+            border: 1px solid var(--stokin-border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+            transition: box-shadow 0.25s var(--ease-out-smooth), border-color 0.25s var(--ease-out-smooth), background-color 0.25s var(--ease-out-smooth);
+            overflow: hidden;
+        }
+
+        .modern-card:hover {
+            box-shadow: var(--shadow-hover);
+            border-color: var(--stokin-slate-400);
+        }
+
+        .modern-card-header {
+            padding: 1.15rem 1.4rem;
+            background-color: var(--stokin-card-header);
+            border-bottom: 1px solid var(--stokin-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        /* KPI / Stat Metric Cards */
+        .kpi-tile {
+            background: var(--stokin-surface);
+            border: 1px solid var(--stokin-border);
+            border-radius: var(--radius-md);
+            padding: 1.1rem 1.15rem;
+            box-shadow: var(--shadow-card);
+            transition: all 0.22s var(--ease-out-smooth);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .kpi-tile:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--stokin-slate-400);
+        }
+
+        .kpi-tile.active-filter {
+            border-color: var(--stokin-teal-600);
+            box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2), var(--shadow-hover);
+        }
+
+        .kpi-icon-wrap {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .kpi-num {
+            font-size: 1.85rem;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            font-variant-numeric: tabular-nums;
+            color: var(--stokin-text-primary);
+        }
+
+        .kpi-label {
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--stokin-text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .kpi-bar-track {
+            width: 100%;
+            height: 5px;
+            background-color: var(--stokin-kpi-bar-track);
+            border-radius: 999px;
+            overflow: hidden;
+            margin-top: 0.6rem;
+        }
+
+        .kpi-bar-fill {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.6s var(--ease-out-smooth);
+        }
+
+        /* Quadrant Specific Themes */
+        .q1-accent {
+            color: var(--q1-emerald);
+        }
+
+        .q1-bg-soft {
+            background-color: var(--q1-bg);
+            border: 1px solid var(--q1-border);
+        }
+
+        .q2-accent {
+            color: var(--q2-blue);
+        }
+
+        .q2-bg-soft {
+            background-color: var(--q2-bg);
+            border: 1px solid var(--q2-border);
+        }
+
+        .q3-accent {
+            color: var(--q3-amber);
+        }
+
+        .q3-bg-soft {
+            background-color: var(--q3-bg);
+            border: 1px solid var(--q3-border);
+        }
+
+        .q4-accent {
+            color: var(--q4-slate);
+        }
+
+        .q4-bg-soft {
+            background-color: var(--q4-bg);
+            border: 1px solid var(--q4-border);
+        }
+
+        /* Badges */
+        .badge-q1 {
+            background-color: var(--q1-bg);
+            color: var(--q1-text);
+            border: 1px solid var(--q1-border);
+            font-weight: 700;
+            font-size: 0.75rem;
+            padding: 0.35rem 0.65rem;
+            border-radius: 6px;
+            letter-spacing: 0.02em;
+        }
+
+        .badge-q2 {
+            background-color: var(--q2-bg);
+            color: var(--q2-text);
+            border: 1px solid var(--q2-border);
+            font-weight: 700;
+            font-size: 0.75rem;
+            padding: 0.35rem 0.65rem;
+            border-radius: 6px;
+            letter-spacing: 0.02em;
+        }
+
+        .badge-q3 {
+            background-color: var(--q3-bg);
+            color: var(--q3-text);
+            border: 1px solid var(--q3-border);
+            font-weight: 700;
+            font-size: 0.75rem;
+            padding: 0.35rem 0.65rem;
+            border-radius: 6px;
+            letter-spacing: 0.02em;
+        }
+
+        .badge-q4 {
+            background-color: var(--q4-bg);
+            color: var(--q4-text);
+            border: 1px solid var(--q4-border);
+            font-weight: 700;
+            font-size: 0.75rem;
+            padding: 0.35rem 0.65rem;
+            border-radius: 6px;
+            letter-spacing: 0.02em;
+        }
+
+        /* Chart Canvas Wrapper */
+        .chart-box {
+            position: relative;
+            height: 460px;
+            width: 100%;
+        }
+
+        /* Interactive Quadrant Guide Tiles */
+        .legend-card {
+            border-radius: 10px;
+            padding: 0.6rem 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s var(--ease-out-smooth);
+            user-select: none;
+        }
+
+        .legend-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Quick Filter Pill Buttons */
+        .chart-filter-btn {
+            background: var(--stokin-surface);
+            border: 1px solid var(--stokin-border);
+            color: var(--stokin-text-secondary);
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 0.36rem 0.75rem;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .chart-filter-btn:hover {
+            background: var(--stokin-hover-bg);
+            color: var(--stokin-text-primary);
+        }
+
+        .chart-filter-btn.active {
+            background: var(--stokin-teal-600);
+            color: #ffffff;
+            border-color: var(--stokin-teal-600);
+            box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25);
+        }
+
+        /* Modern Quick Link Banner to Daftar Ide */
+        .banner-shortcut {
+            background: var(--stokin-surface);
+            border: 1px solid var(--stokin-border);
+            border-left: 4px solid var(--stokin-teal-600);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem 1.5rem;
+            box-shadow: var(--shadow-card);
+            transition: all 0.22s var(--ease-out-smooth);
+        }
+
+        .banner-shortcut:hover {
+            box-shadow: var(--shadow-hover);
+            border-color: var(--stokin-teal-200);
+            border-left-color: var(--stokin-teal-700);
+        }
+
+        /* Executive MVP Hero Recommendation Card */
+        .hero-mvp-card {
+            background: var(--hero-mvp-bg);
+            border: 1.5px solid var(--hero-mvp-border);
+            border-radius: var(--radius-xl);
+            box-shadow: 0 10px 25px -5px rgba(13, 148, 136, 0.08), 0 8px 10px -6px rgba(13, 148, 136, 0.04);
+            color: var(--stokin-text-primary);
+            position: relative;
+            overflow: hidden;
+            transition: background 0.25s var(--ease-out-smooth), border-color 0.25s var(--ease-out-smooth);
+        }
+
+        .hero-top-pill {
+            background: rgba(20, 184, 166, 0.15);
+            border: 1px solid rgba(20, 184, 166, 0.3);
+            color: var(--stokin-teal-600);
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 0.35rem 0.85rem;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        [data-theme="dark"] .hero-top-pill {
+            color: #99f6e4;
+        }
+
+        .mvp-score-dial {
+            background: var(--stokin-surface);
+            border: 1px solid var(--stokin-border);
+            border-radius: var(--radius-md);
+            padding: 0.85rem 1rem;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .roadmap-step {
+            background: var(--stokin-surface);
+            border: 1px solid var(--stokin-border);
+            border-radius: var(--radius-sm);
+            padding: 0.75rem 0.85rem;
+            height: 100%;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .roadmap-step:hover {
+            border-color: var(--stokin-teal-500);
+            box-shadow: 0 4px 10px rgba(13, 148, 136, 0.08);
+        }
+
+        /* Segmented Score Selector in Modal */
+        .score-segmented-group {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+        }
+
+        .score-btn {
+            border: 1.5px solid var(--stokin-border);
+            background: var(--stokin-surface);
+            color: var(--stokin-text-secondary);
+            border-radius: 8px;
+            padding: 0.65rem 0.2rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            transition: all 0.18s var(--ease-out-smooth);
+            cursor: pointer;
+        }
+
+        .score-btn small {
+            font-size: 0.68rem;
+            font-weight: 600;
+            opacity: 0.8;
+        }
+
+        .score-btn:hover {
+            border-color: var(--stokin-teal-500);
+            background: var(--stokin-teal-50);
+            color: var(--stokin-teal-800);
+        }
+
+        .score-btn.active {
+            border-color: var(--stokin-teal-600);
+            background: var(--stokin-teal-600);
+            color: #ffffff;
+            box-shadow: 0 3px 8px rgba(13, 148, 136, 0.28);
+        }
+
+        /* Custom Form Inputs */
+        .form-control-modern {
+            background-color: var(--stokin-input-bg);
+            border: 1.5px solid var(--stokin-input-border);
+            border-radius: 10px;
+            padding: 0.65rem 0.9rem;
+            font-size: 0.92rem;
+            color: var(--stokin-text-primary);
+            transition: all 0.2s ease;
+        }
+
+        .form-control-modern:focus {
+            background-color: var(--stokin-input-bg);
+            color: var(--stokin-text-primary);
+            border-color: var(--stokin-teal-600);
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.16);
+            outline: none;
+        }
+
+        /* Toast Modern */
+        .modern-toast {
+            background: var(--stokin-toast-bg);
+            color: var(--stokin-toast-text);
+            border-radius: 12px;
+            border: 1px solid var(--stokin-border);
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.15);
+            padding: 0.75rem 1.1rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInSlide {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeInSlide 0.35s var(--ease-out-smooth) forwards;
+        }
+    </style>
+    <link rel="stylesheet" href="stokin-shared.css">
+</head>
+
+<body>
+
+    <!-- EXECUTIVE APP HEADER -->
+    <header class="stokin-header py-3">
+        <div class="container-xl">
+            <div class="d-flex flex-column flex-xl-row align-items-xl-center justify-content-between gap-3">
+
+                <!-- Brand Title & Identity -->
+                <div class="d-flex align-items-center gap-3">
+                    <a href="index.html" class="brand-link text-decoration-none d-flex align-items-center gap-3">
+                        <div class="brand-icon-box" aria-hidden="true">
+                            <i class="bi bi-boxes"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <h1 class="h4 mb-0 fw-bold tracking-tight"
+                                    style="letter-spacing: -0.02em; color: var(--stokin-text-primary);">StokIn</h1>
+                                <span class="badge rounded-pill px-2 py-1 stokin-teal-chip" style="font-size: 0.72rem;">
+                                    Sync Engine &bull; Kasir & Marketplace
+                                </span>
+                            </div>
+                            <p class="mb-0 text-muted" style="font-size: 0.82rem; letter-spacing: 0.01em;">
+                                Validator Ide Matriks Prioritas &bull; Feasibility vs Impact (LKPD Kewirausahaan)
+                            </p>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <nav class="nav-pill-group my-1 my-xl-0" aria-label="Navigasi Utama">
+                    <a href="index.html" class="nav-pill-btn active" aria-current="page">
+                        <i class="bi bi-grid-3x3-gap-fill" style="color: var(--stokin-teal-600);"></i>
+                        <span>Matriks &amp; Prioritas</span>
+                    </a>
+                    <a href="daftar-ide.html" class="nav-pill-btn">
+                        <i class="bi bi-table"></i>
+                        <span>Tabel Daftar Ide</span>
+                        <span id="navIdeaCountBadge" class="badge rounded-pill ms-1"
+                            style="font-size: 0.7rem; font-weight: 700; background: var(--stokin-badge-bg); color: var(--stokin-badge-text); border: 1px solid var(--stokin-border);">0</span>
+                    </a>
+                </nav>
+
+                <!-- Actions Top Bar (Includes Dark/Light Toggle) -->
+                <div class="d-flex align-items-center gap-2 flex-wrap header-actions-bar">
+
+                    <!-- Dark/Light Mode Toggle Button -->
+                    <button id="themeToggleBtn" type="button" class="btn-theme-toggle"
+                        aria-label="Ganti tema tampilan (Light/Dark)" title="Ganti Mode Tampilan (Light / Dark)">
+                        <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
+                        <span id="themeLabel">Mode Gelap</span>
+                    </button>
+
+                    <button type="button" class="btn-modern-primary" data-bs-toggle="modal" data-bs-target="#ideaModal">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        <span>Tambah Ide</span>
+                    </button>
+                    <button id="btnLoadDefault" type="button" class="btn-modern-outline"
+                        title="Kelola, revisi, impor, atau muat data ide LKPD tanpa ubah kode">
+                        <i class="bi bi-journal-check" style="color: var(--stokin-teal-600);"></i>
+                        <span>Revisi &amp; Muat LKPD</span>
+                    </button>
+                    <button id="btnClearAll" type="button" class="btn-modern-danger-outline"
+                        title="Kosongkan semua daftar ide">
+                        <i class="bi bi-trash3"></i>
+                        <span>Kosongkan</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <main class="container-xl py-3 py-md-4 flex-grow-1">
+
+        <!-- EXECUTIVE KPI METRIC TILES -->
+        <section aria-label="Ringkasan Statistik Matriks" class="mb-4">
+            <div class="row g-2 g-md-3">
+
+                <!-- Total Ide -->
+                <div class="col-12 col-xl">
+                    <div class="kpi-tile" id="kpiTileTotal" onclick="filterChartByQuadrant('ALL')"
+                        title="Klik untuk menampilkan semua titik">
+                        <div>
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="kpi-label">Total Ide Terdaftar</span>
+                                <div class="kpi-icon-wrap"
+                                    style="background: var(--stokin-pill-group-bg); color: var(--stokin-text-secondary);">
+                                    <i class="bi bi-lightbulb-fill"></i>
+                                </div>
+                            </div>
+                            <div id="statTotal" class="kpi-num">0</div>
+                        </div>
+                        <div>
+                            <div class="kpi-bar-track">
+                                <div class="kpi-bar-fill" style="width: 100%; background: var(--stokin-teal-600);">
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">Basis Analisis
+                                Matriks</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Q1 Prioritas Utama -->
+                <div class="col-6 col-md-3 col-xl">
+                    <div class="kpi-tile" id="kpiTileQ1" onclick="filterChartByQuadrant('Q1')"
+                        title="Klik untuk filter Kuadran 1">
+                        <div>
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="kpi-label q1-accent">⭐ Q1: Prioritas Utama</span>
+                                <div class="kpi-icon-wrap q1-bg-soft q1-accent">
+                                    <i class="bi bi-star-fill"></i>
+                                </div>
+                            </div>
+                            <div id="statQ1" class="kpi-num q1-accent">0</div>
+                        </div>
+                        <div>
+                            <div class="kpi-bar-track">
+                                <div id="barQ1" class="kpi-bar-fill" style="width: 0%; background: var(--q1-emerald);">
+                                </div>
+                            </div>
+                            <small id="subQ1" class="text-muted d-block mt-1" style="font-size: 0.72rem;">Feas &ge; 4
+                                &bull; Impact &ge; 4</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Q2 Potensi -->
+                <div class="col-6 col-md-3 col-xl">
+                    <div class="kpi-tile" id="kpiTileQ2" onclick="filterChartByQuadrant('Q2')"
+                        title="Klik untuk filter Kuadran 2">
+                        <div>
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="kpi-label q2-accent">💡 Q2: Potensi Tinggi</span>
+                                <div class="kpi-icon-wrap q2-bg-soft q2-accent">
+                                    <i class="bi bi-lightning-charge-fill"></i>
+                                </div>
+                            </div>
+                            <div id="statQ2" class="kpi-num q2-accent">0</div>
+                        </div>
+                        <div>
+                            <div class="kpi-bar-track">
+                                <div id="barQ2" class="kpi-bar-fill" style="width: 0%; background: var(--q2-blue);">
+                                </div>
+                            </div>
+                            <small id="subQ2" class="text-muted d-block mt-1" style="font-size: 0.72rem;">Feas &lt; 4
+                                &bull; Impact &ge; 4</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Q3 Pertimbangan -->
+                <div class="col-6 col-md-3 col-xl">
+                    <div class="kpi-tile" id="kpiTileQ3" onclick="filterChartByQuadrant('Q3')"
+                        title="Klik untuk filter Kuadran 3">
+                        <div>
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="kpi-label q3-accent">⚠️ Q3: Pertimbangan</span>
+                                <div class="kpi-icon-wrap q3-bg-soft q3-accent">
+                                    <i class="bi bi-sliders"></i>
+                                </div>
+                            </div>
+                            <div id="statQ3" class="kpi-num q3-accent">0</div>
+                        </div>
+                        <div>
+                            <div class="kpi-bar-track">
+                                <div id="barQ3" class="kpi-bar-fill" style="width: 0%; background: var(--q3-amber);">
+                                </div>
+                            </div>
+                            <small id="subQ3" class="text-muted d-block mt-1" style="font-size: 0.72rem;">Feas &ge; 4
+                                &bull; Impact &lt; 4</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Q4 Tunda -->
+                <div class="col-6 col-md-3 col-xl">
+                    <div class="kpi-tile" id="kpiTileQ4" onclick="filterChartByQuadrant('Q4')"
+                        title="Klik untuk filter Kuadran 4">
+                        <div>
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="kpi-label q4-accent">💤 Q4: Tunda / Buang</span>
+                                <div class="kpi-icon-wrap q4-bg-soft q4-accent">
+                                    <i class="bi bi-pause-circle-fill"></i>
+                                </div>
+                            </div>
+                            <div id="statQ4" class="kpi-num q4-accent">0</div>
+                        </div>
+                        <div>
+                            <div class="kpi-bar-track">
+                                <div id="barQ4" class="kpi-bar-fill" style="width: 0%; background: var(--q4-slate);">
+                                </div>
+                            </div>
+                            <small id="subQ4" class="text-muted d-block mt-1" style="font-size: 0.72rem;">Feas &lt; 4
+                                &bull; Impact &lt; 4</small>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- SEKSI GRAFIK MATRIKS SCATTER PLOT -->
+        <section aria-label="Grafik Matriks Scatter Plot" class="mb-4">
+            <div class="modern-card">
+
+                <div class="modern-card-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center stokin-teal-chip"
+                            style="width: 38px; height: 38px;">
+                            <i class="bi bi-grid-3x3-gap-fill fs-5"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <h2 class="h6 mb-0 fw-bold"
+                                    style="letter-spacing: -0.01em; color: var(--stokin-text-primary);">
+                                    Matriks Prioritas Scatter Plot: Feasibility vs Impact
+                                </h2>
+                                <span class="badge border"
+                                    style="font-size: 0.72rem; background: var(--stokin-badge-bg); color: var(--stokin-badge-text); border-color: var(--stokin-border) !important;">
+                                    Batas Kuadran: 3.5
+                                </span>
+                            </div>
+                            <small class="text-muted">Arahkan kursor atau sentuh titik untuk membaca detail &amp; edit
+                                ide fitur</small>
+                        </div>
+                    </div>
+
+                    <!-- Quick Filter Tools on Chart -->
+                    <div
+                        class="d-flex align-items-center gap-2 flex-wrap w-100 w-lg-auto justify-content-between justify-content-lg-end">
+                        <div class="d-flex align-items-center gap-1 flex-wrap" role="group"
+                            aria-label="Filter Kuadran Chart">
+                            <button type="button" class="chart-filter-btn active" id="filterBtnAll"
+                                onclick="filterChartByQuadrant('ALL')">
+                                Semua
+                            </button>
+                            <button type="button" class="chart-filter-btn" id="filterBtnQ1"
+                                onclick="filterChartByQuadrant('Q1')">
+                                ⭐ Q1
+                            </button>
+                            <button type="button" class="chart-filter-btn" id="filterBtnQ2"
+                                onclick="filterChartByQuadrant('Q2')">
+                                💡 Q2
+                            </button>
+                            <button type="button" class="chart-filter-btn" id="filterBtnQ3"
+                                onclick="filterChartByQuadrant('Q3')">
+                                ⚠️ Q3
+                            </button>
+                            <button type="button" class="chart-filter-btn" id="filterBtnQ4"
+                                onclick="filterChartByQuadrant('Q4')">
+                                💤 Q4
+                            </button>
+                        </div>
+
+                        <button type="button" class="btn-modern-primary btn-sm px-3" data-bs-toggle="modal"
+                            data-bs-target="#ideaModal">
+                            <i class="bi bi-plus-circle-fill"></i>
+                            <span>Tambah Ide</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-3 p-md-4 d-flex flex-column">
+
+                    <!-- Interactive 4-Quadrant Legend Tiles -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-12 col-sm-6 col-lg-3">
+                            <div class="legend-card q1-bg-soft" onclick="filterChartByQuadrant('Q1')"
+                                title="Klik untuk isolasi Q1">
+                                <div class="d-flex align-items-center gap-2 min-w-0">
+                                    <span class="fs-6 flex-shrink-0">⭐</span>
+                                    <div class="min-w-0">
+                                        <div class="fw-bold q1-accent" style="font-size: 0.78rem;">Q1: PRIORITAS UTAMA
+                                        </div>
+                                        <small class="text-muted" style="font-size: 0.68rem;">Feas &ge; 4, Impact &ge;
+                                            4</small>
+                                    </div>
+                                </div>
+                                <span class="badge border shadow-xs"
+                                    style="font-size: 0.7rem; background: var(--stokin-surface); color: var(--q1-emerald); border-color: var(--q1-border) !important;">MVP
+                                    Utama</span>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-sm-6 col-lg-3">
+                            <div class="legend-card q2-bg-soft" onclick="filterChartByQuadrant('Q2')"
+                                title="Klik untuk isolasi Q2">
+                                <div class="d-flex align-items-center gap-2 min-w-0">
+                                    <span class="fs-6 flex-shrink-0">💡</span>
+                                    <div class="min-w-0">
+                                        <div class="fw-bold q2-accent" style="font-size: 0.78rem;">Q2: POTENSI TINGGI
+                                        </div>
+                                        <small class="text-muted" style="font-size: 0.68rem;">Feas &lt; 4, Impact &ge;
+                                            4</small>
+                                    </div>
+                                </div>
+                                <span class="badge border shadow-xs"
+                                    style="font-size: 0.7rem; background: var(--stokin-surface); color: var(--q2-blue); border-color: var(--q2-border) !important;">Riset
+                                    Lanjut</span>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-sm-6 col-lg-3">
+                            <div class="legend-card q3-bg-soft" onclick="filterChartByQuadrant('Q3')"
+                                title="Klik untuk isolasi Q3">
+                                <div class="d-flex align-items-center gap-2 min-w-0">
+                                    <span class="fs-6 flex-shrink-0">⚠️</span>
+                                    <div class="min-w-0">
+                                        <div class="fw-bold q3-accent" style="font-size: 0.78rem;">Q3: PERTIMBANGAN
+                                        </div>
+                                        <small class="text-muted" style="font-size: 0.68rem;">Feas &ge; 4, Impact &lt;
+                                            4</small>
+                                    </div>
+                                </div>
+                                <span class="badge border shadow-xs"
+                                    style="font-size: 0.7rem; background: var(--stokin-surface); color: var(--q3-amber); border-color: var(--q3-border) !important;">Quick
+                                    Wins</span>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-sm-6 col-lg-3">
+                            <div class="legend-card q4-bg-soft" onclick="filterChartByQuadrant('Q4')"
+                                title="Klik untuk isolasi Q4">
+                                <div class="d-flex align-items-center gap-2 min-w-0">
+                                    <span class="fs-6 flex-shrink-0">💤</span>
+                                    <div class="min-w-0">
+                                        <div class="fw-bold q4-accent" style="font-size: 0.78rem;">Q4: TUNDA / BUANG
+                                        </div>
+                                        <small class="text-muted" style="font-size: 0.68rem;">Feas &lt; 4, Impact &lt;
+                                            4</small>
+                                    </div>
+                                </div>
+                                <span class="badge border shadow-xs"
+                                    style="font-size: 0.7rem; background: var(--stokin-surface); color: var(--q4-slate); border-color: var(--q4-border) !important;">Low
+                                    Priority</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Canvas Chart.js Box -->
+                    <div class="chart-box">
+                        <canvas id="matrixChart"
+                            aria-label="Grafik Scatter Plot Matriks Prioritas Feasibility vs Impact"
+                            role="img"></canvas>
+                        <div id="chartEmptyState" class="chart-empty-overlay d-none">
+                            <div class="mb-2 text-muted">
+                                <i class="bi bi-grid-3x3-gap fs-1"></i>
+                            </div>
+                            <h3 class="h6 fw-bold mb-1" style="color: var(--stokin-text-primary);">Belum Ada Data Ide di
+                                Matriks</h3>
+                            <p class="small text-muted mb-3" style="max-width: 420px;">
+                                Data sebelumnya telah dihapus atau matriks masih kosong. Tambahkan ide baru atau buka
+                                editor LKPD untuk memuat data revisi.
+                            </p>
+                            <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                <button type="button" class="btn-modern-primary btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#ideaModal">
+                                    <i class="bi bi-plus-circle-fill"></i>
+                                    <span>Tambah Ide Baru</span>
+                                </button>
+                                <button type="button" class="btn-modern-outline btn-sm"
+                                    onclick="window.stokinCtrl && window.stokinCtrl.openLkpdModal()">
+                                    <i class="bi bi-journal-check" style="color: var(--stokin-teal-600);"></i>
+                                    <span>Revisi &amp; Muat LKPD</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 d-flex flex-wrap align-items-center justify-content-between gap-2 text-muted"
+                        style="font-size: 0.78rem;">
+                        <div>
+                            <i class="bi bi-info-circle me-1" style="color: var(--stokin-teal-600);"></i> Klik titik
+                            pada grafik untuk mengedit atau menghapus ide. Titik pada koordinat serupa disebar melingkar
+                            secara presisi.
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge border"
+                                style="background: var(--stokin-surface); color: var(--stokin-text-secondary); border-color: var(--stokin-border) !important;">
+                                Sumbu X = Feasibility (1 - 5)
+                            </span>
+                            <span class="badge border"
+                                style="background: var(--stokin-surface); color: var(--stokin-text-secondary); border-color: var(--stokin-border) !important;">
+                                Sumbu Y = Impact (1 - 5)
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- BANNER TAUTAN KE HALAMAN TABEL DAFTAR IDE -->
+        <section aria-label="Akses Cepat Tabel Ide" class="mb-4">
+            <div
+                class="banner-shortcut d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                <div class="d-flex align-items-start align-items-sm-center gap-3 min-w-0">
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 stokin-teal-chip"
+                        style="width: 46px; height: 46px; font-size: 1.3rem;">
+                        <i class="bi bi-table"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <h3 class="h6 mb-0 fw-bold" style="color: var(--stokin-text-primary);">Tabel Manajemen
+                                Lengkap &amp; Filter Detail Ide Fitur</h3>
+                            <span class="badge rounded-pill stokin-teal-chip" style="font-size: 0.72rem;">
+                                Halaman Khusus
+                            </span>
+                        </div>
+                        <p class="mb-0 text-muted small mt-1">
+                            Buka halaman tabel interaktif untuk pencarian langsung (live search), filter per kuadran,
+                            penilaian visual, serta ekspor format CSV untuk laporan LKPD 5.
+                        </p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-shrink-0 w-100 w-md-auto">
+                    <a href="daftar-ide.html" class="btn-modern-primary text-decoration-none w-100 w-md-auto">
+                        <i class="bi bi-table"></i>
+                        <span>Buka Halaman Tabel Ide</span>
+                        <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- EXECUTIVE MVP HERO RECOMMENDATION -->
+        <section aria-label="Rekomendasi Produk Prioritas" class="mb-5">
+            <div id="recommendationContainer">
+                <!-- Dynamically rendered via JavaScript -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-top py-3 mt-auto"
+        style="background-color: var(--stokin-surface); border-color: var(--stokin-border) !important;">
+        <div
+            class="container-xl text-center text-md-start d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+            <div class="text-muted small">
+                &copy; 2026 <strong>StokIn</strong> &bull; Media Validasi Ide Produk (Mata Pelajaran Kreativitas Inovasi
+                dan Kewirausahaan).
+            </div>
+            <div class="small text-muted d-flex align-items-center gap-2">
+                <span>Formula Matriks:</span>
+                <span class="badge border"
+                    style="background: var(--stokin-badge-bg); color: var(--stokin-text-primary); border-color: var(--stokin-border) !important;">
+                    X &ge; 4 &amp; Y &ge; 4 &rarr; ⭐ Prioritas Utama (MVP)
+                </span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL: FORM TAMBAH IDE FITUR INTERAKTIF -->
+    <div class="modal fade" id="ideaModal" tabindex="-1" aria-labelledby="ideaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-elevated"
+                style="border-radius: var(--radius-lg); background-color: var(--stokin-modal-bg); overflow: hidden;">
+
+                <div class="modal-header"
+                    style="background-color: var(--stokin-surface); border-bottom: 1px solid var(--stokin-border);">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center stokin-teal-chip"
+                            style="width: 38px; height: 38px;">
+                            <i class="bi bi-lightbulb-fill fs-5"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h5 class="modal-title h6 mb-0 fw-bold" id="ideaModalLabel"
+                                style="color: var(--stokin-text-primary);">Tambah Ide Fitur Baru</h5>
+                            <small class="text-muted" style="font-size: 0.74rem;">Penilaian Matriks Feasibility vs
+                                Impact</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                </div>
+
+                <div class="modal-body p-3 p-sm-4" style="background-color: var(--stokin-modal-bg);">
+                    <form id="ideaForm" novalidate>
+
+                        <div class="mb-3">
+                            <label for="ideaName" class="form-label fw-bold mb-1"
+                                style="font-size: 0.85rem; color: var(--stokin-text-primary);">
+                                Nama Ide Fitur <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" id="ideaName" class="form-control form-control-modern"
+                                placeholder="Contoh: Notifikasi stok kritis otomatis via WhatsApp" required
+                                maxlength="80" autocomplete="off">
+                            <div class="form-text text-muted" style="font-size: 0.75rem;">
+                                Jelaskan solusi inovatif untuk mencegah selisih stok kasir & marketplace.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label fw-bold mb-0"
+                                    style="font-size: 0.85rem; color: var(--stokin-text-primary);">
+                                    Feasibility (Kelayakan Teknis) <span class="text-danger">*</span>
+                                </label>
+                                <span class="badge"
+                                    style="background: var(--stokin-teal-50); color: var(--stokin-teal-700); border: 1px solid var(--stokin-teal-100); font-size: 0.7rem;">Sumbu
+                                    X</span>
+                            </div>
+
+                            <div class="score-segmented-group" id="feasibilityButtons">
+                                <button type="button" class="score-btn" data-score="1" onclick="selectFeasScore(1)">
+                                    <span>1</span>
+                                    <small>Sangat Sulit</small>
+                                </button>
+                                <button type="button" class="score-btn" data-score="2" onclick="selectFeasScore(2)">
+                                    <span>2</span>
+                                    <small>Sulit</small>
+                                </button>
+                                <button type="button" class="score-btn" data-score="3" onclick="selectFeasScore(3)">
+                                    <span>3</span>
+                                    <small>Sedang</small>
+                                </button>
+                                <button type="button" class="score-btn" data-score="4" onclick="selectFeasScore(4)">
+                                    <span>4</span>
+                                    <small>Mudah</small>
+                                </button>
+                                <button type="button" class="score-btn" data-score="5" onclick="selectFeasScore(5)">
+                                    <span>5</span>
+                                    <small>Sangat Mudah</small>
+                                </button>
+                            </div>
+                            <input type="hidden" id="feasibilitySelect" required value="">
+                            <div id="feasibilityDescText" class="form-text text-muted mt-1" style="font-size: 0.75rem;">
+                                Pilih skala 1 (sangat butuh riset berat/biaya) hingga 5 (cepat dibuat, API siap).
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label fw-bold mb-0"
+                                    style="font-size: 0.85rem; color: var(--stokin-text-primary);">
+                                    Impact (Dampak Bisnis / Toko) <span class="text-danger">*</span>
+                                </label>
+                                <span class="badge"
+                                    style="background: var(--stokin-teal-50); color: var(--stokin-teal-700); border: 1px solid var(--stokin-teal-100); font-size: 0.7rem;">Sumbu
+                                    Y</span>
+                            </div>
+
+                            <div class="score-segmented-group" id="impactButtons">
+                                <button type="button" class="score-btn" data-score="1" onclick="selectImpactScore(1)">
+                                    <span>1</span>
+                                    <small>Sangat Rendah</small>
+                                </button>
+                                <button type="button" class="score-btn" data-score="2" onclick="selectImpactScore(2)">
+                                    <span>2</span>
+                                    <small>Rendah</small>
+                                </button>
+                                <button type="button" class="score-btn" data-score="3" onclick="selectImpactScore(3)">
+                                    <span>3</span>
+                                    <small>Sedang</small>
+                                </button>
+                                <button type="button" class="score-btn" data-score="4" onclick="selectImpactScore(4)">
+                                    <span>4</span>
+                                    <small>Tinggi</small>
+                                </button>
+                                <button type="button" class="score-btn" data-score="5" onclick="selectImpactScore(5)">
+                                    <span>5</span>
+                                    <small>Sangat Tinggi</small>
+                                </button>
+                            </div>
+                            <input type="hidden" id="impactSelect" required value="">
+                            <div id="impactDescText" class="form-text text-muted mt-1" style="font-size: 0.75rem;">
+                                Pilih skala 1 (dampak kecil) hingga 5 (krusial mencegah overselling/rugi).
+                            </div>
+                        </div>
+
+                        <div id="livePreviewBox"
+                            class="p-3 rounded-3 mb-4 border d-flex align-items-center justify-content-between"
+                            style="background-color: var(--stokin-card-subtle); border-color: var(--stokin-border) !important;">
+                            <div>
+                                <div class="text-muted small fw-semibold">Prediksi Kuadran:</div>
+                                <div id="previewFormulaText" class="text-muted" style="font-size: 0.74rem;">Pilih nilai
+                                    kelayakan & dampak</div>
+                            </div>
+                            <span id="previewBadge" class="badge bg-secondary-subtle text-secondary border">Pilih
+                                Nilai</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center gap-2 pt-2 border-top flex-wrap"
+                            style="border-color: var(--stokin-border) !important;">
+                            <button type="button" id="btnDeleteFromModal" class="btn btn-outline-danger px-3 d-none">
+                                <i class="bi bi-trash3-fill me-1"></i>
+                                <span>Hapus Ide</span>
+                            </button>
+                            <div class="d-flex justify-content-end gap-2 ms-auto">
+                                <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal"
+                                    style="color: var(--stokin-text-secondary); border-color: var(--stokin-border);">
+                                    Batal
+                                </button>
+                                <button type="submit" id="btnSubmitIdea" class="btn-modern-primary px-4">
+                                    <i class="bi bi-plus-circle-fill"></i>
+                                    <span>Simpan Ide ke Matriks</span>
+                                </button>
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+        <div id="actionToast" class="toast align-items-center modern-toast border-0" role="alert" aria-live="assertive"
+            aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center gap-2" id="toastMessage">
+                    <i class="bi bi-check-circle-fill text-success"></i> Berhasil disimpan
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Tutup"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LIBRARIES -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="stokin-shared.js"></script>
+
+    <!-- CORE APPLICATION JAVASCRIPT -->
+    <script>
+        let ideas = [];
+        let activeChartFilter = 'ALL';
+        let scatterChart = null;
+        let stokinCtrl = null;
+
+        const feasibilitySelect = document.getElementById('feasibilitySelect');
+        const impactSelect = document.getElementById('impactSelect');
+        const previewBadge = document.getElementById('previewBadge');
+        const previewFormulaText = document.getElementById('previewFormulaText');
+        const recommendationContainer = document.getElementById('recommendationContainer');
+        const chartEmptyState = document.getElementById('chartEmptyState');
+        const btnClearAll = document.getElementById('btnClearAll');
+        const actionToastEl = document.getElementById('actionToast');
+        const toastMessage = document.getElementById('toastMessage');
+
+        const statTotal = document.getElementById('statTotal');
+        const statQ1 = document.getElementById('statQ1');
+        const statQ2 = document.getElementById('statQ2');
+        const statQ3 = document.getElementById('statQ3');
+        const statQ4 = document.getElementById('statQ4');
+        const navIdeaCountBadge = document.getElementById('navIdeaCountBadge');
+
+        const barQ1 = document.getElementById('barQ1');
+        const barQ2 = document.getElementById('barQ2');
+        const barQ3 = document.getElementById('barQ3');
+        const barQ4 = document.getElementById('barQ4');
+
+        const bsToast = (typeof bootstrap !== 'undefined' && actionToastEl)
+            ? new bootstrap.Toast(actionToastEl, { delay: 2800 })
+            : null;
+
+        function showNotification(message, iconClass = 'bi-check-circle-fill text-success') {
+            if (toastMessage) {
+                toastMessage.innerHTML = `<i class="bi ${iconClass}"></i> <span>${message}</span>`;
+            }
+            if (bsToast) bsToast.show();
+        }
+
+        function evaluateIdea(feasibility, impact) {
+            return window.StokIn.evaluateIdea(feasibility, impact);
+        }
+
+        function escapeHtml(str) {
+            return window.StokIn.escapeHtml(str);
+        }
+
+        function openEditIdeaModal(id) {
+            if (stokinCtrl) stokinCtrl.openEditModal(id);
+        }
+
+        // ==========================================
+        // CHART & QUADRANT BACKGROUND PLUGIN
+        // ==========================================
+        const quadrantBackgroundPlugin = {
+            id: 'quadrantBackgroundPlugin',
+            beforeDraw(chart) {
+                const { ctx, chartArea, scales } = chart;
+                if (!chartArea) return;
+                const { left, top, right, bottom } = chartArea;
+                const xScale = scales.x;
+                const yScale = scales.y;
+
+                const xThreshold = xScale.getPixelForValue(3.5);
+                const yThreshold = yScale.getPixelForValue(3.5);
+
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+                ctx.save();
+
+                // Quadrant background soft tints
+                ctx.fillStyle = isDark ? 'rgba(59, 130, 246, 0.08)' : 'rgba(37, 99, 235, 0.04)';
+                ctx.fillRect(left, top, xThreshold - left, yThreshold - top);
+
+                ctx.fillStyle = isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(5, 150, 105, 0.06)';
+                ctx.fillRect(xThreshold, top, right - xThreshold, yThreshold - top);
+
+                ctx.fillStyle = isDark ? 'rgba(148, 163, 184, 0.06)' : 'rgba(100, 116, 139, 0.03)';
+                ctx.fillRect(left, yThreshold, xThreshold - left, bottom - yThreshold);
+
+                ctx.fillStyle = isDark ? 'rgba(245, 158, 11, 0.08)' : 'rgba(217, 119, 6, 0.04)';
+                ctx.fillRect(xThreshold, yThreshold, right - xThreshold, bottom - yThreshold);
+
+                ctx.lineWidth = 1.8;
+                ctx.strokeStyle = isDark ? '#14b8a6' : '#0d9488';
+                ctx.setLineDash([5, 5]);
+
+                ctx.beginPath();
+                ctx.moveTo(xThreshold, top);
+                ctx.lineTo(xThreshold, bottom);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(left, yThreshold);
+                ctx.lineTo(right, yThreshold);
+                ctx.stroke();
+
+                ctx.setLineDash([]);
+
+                const isCompact = chartArea.width < 360;
+                ctx.font = isCompact ? '700 9.5px "Plus Jakarta Sans", sans-serif' : '700 11px "Plus Jakarta Sans", sans-serif';
+                const padX = isCompact ? 8 : 14;
+                const padY = isCompact ? 8 : 12;
+
+                ctx.fillStyle = isDark ? '#93c5fd' : '#1e40af';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.fillText(isCompact ? '💡 Q2: POTENSI' : '💡 Q2: POTENSI TINGGI', left + padX, top + padY);
+
+                ctx.fillStyle = isDark ? '#6ee7b7' : '#065f46';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'top';
+                ctx.fillText(isCompact ? '⭐ Q1: PRIORITAS' : '⭐ Q1: PRIORITAS UTAMA', right - padX, top + padY);
+
+                ctx.fillStyle = isDark ? '#cbd5e1' : '#475569';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText('💤 Q4: TUNDA', left + padX, bottom - padY);
+
+                ctx.fillStyle = isDark ? '#fcd34d' : '#92400e';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(isCompact ? '⚠️ Q3: PERTIMB.' : '⚠️ Q3: PERTIMBANGAN', right - padX, bottom - padY);
+
+                ctx.restore();
+            }
+        };
+
+        function updateChartTheme(theme) {
+            if (!scatterChart) return;
+            const isDark = theme === 'dark';
+            const gridColor = isDark ? '#1e293b' : '#e2e8f0';
+            const tickColor = isDark ? '#94a3b8' : '#475569';
+            const titleColor = isDark ? '#2dd4bf' : '#0f766e';
+
+            scatterChart.options.scales.x.grid.color = gridColor;
+            scatterChart.options.scales.x.ticks.color = tickColor;
+            scatterChart.options.scales.x.title.color = titleColor;
+
+            scatterChart.options.scales.y.grid.color = gridColor;
+            scatterChart.options.scales.y.ticks.color = tickColor;
+            scatterChart.options.scales.y.title.color = titleColor;
+
+            scatterChart.options.plugins.tooltip.backgroundColor = isDark ? '#0f172a' : '#ffffff';
+            scatterChart.options.plugins.tooltip.titleColor = isDark ? '#f8fafc' : '#0f172a';
+            scatterChart.options.plugins.tooltip.bodyColor = isDark ? '#cbd5e1' : '#334155';
+            scatterChart.options.plugins.tooltip.borderColor = isDark ? '#334155' : '#cbd5e1';
+
+            scatterChart.update();
+        }
+
+        function calculateDispersedPoints(items) {
+            const coordGroups = {};
+            items.forEach((item, index) => {
+                const key = `${item.feasibility}-${item.impact}`;
+                if (!coordGroups[key]) coordGroups[key] = [];
+                coordGroups[key].push(index);
+            });
+
+            return items.map((item, index) => {
+                const key = `${item.feasibility}-${item.impact}`;
+                const group = coordGroups[key];
+                let visualX = item.feasibility;
+                let visualY = item.impact;
+
+                if (group.length > 1) {
+                    const positionInGroup = group.indexOf(index);
+                    const angle = (2 * Math.PI * positionInGroup) / group.length;
+                    const radius = 0.12;
+                    visualX += Math.cos(angle) * radius;
+                    visualY += Math.sin(angle) * radius;
+                }
+
+                const evalResult = evaluateIdea(item.feasibility, item.impact);
+                let pointColor = evalResult.color;
+                let isFilteredOut = activeChartFilter !== 'ALL' && evalResult.quadrantKey !== activeChartFilter;
+
+                if (isFilteredOut) {
+                    pointColor = 'rgba(203, 213, 225, 0.25)';
+                }
+
+                return {
+                    id: item.id,
+                    x: visualX,
+                    y: visualY,
+                    actualFeasibility: item.feasibility,
+                    actualImpact: item.impact,
+                    name: item.name,
+                    totalScore: evalResult.totalScore,
+                    quadrant: evalResult.quadrant,
+                    quadrantKey: evalResult.quadrantKey,
+                    color: pointColor,
+                    isFilteredOut: isFilteredOut
+                };
+            });
+        }
+
+        function syncChartResponsiveLabels(chart) {
+            if (!chart) return;
+            const isNarrow = chart.width < 480 || window.innerWidth < 576;
+            const isMedium = !isNarrow && (window.innerWidth < 992 || (chart.height && chart.height < 400));
+            chart.options.scales.x.title.text = isNarrow
+                ? 'Feasibility (X: 1-5)'
+                : (isMedium ? 'Kelayakan Teknis (Feasibility: 1-5)' : 'Kelayakan Teknis (Feasibility: 1 = Sangat Sulit, 5 = Sangat Mudah)');
+            chart.options.scales.y.title.text = isNarrow
+                ? 'Impact (Y: 1-5)'
+                : (isMedium ? 'Dampak Bisnis (Impact: 1-5)' : 'Dampak Bisnis (Impact: 1 = Sangat Rendah, 5 = Sangat Tinggi)');
+            chart.options.layout.padding = isNarrow
+                ? { top: 8, right: 10, bottom: 6, left: 4 }
+                : { top: 16, right: 18, bottom: 12, left: 12 };
+        }
+
+        function initChart() {
+            const canvasEl = document.getElementById('matrixChart');
+            if (!canvasEl) return;
+            const ctx = canvasEl.getContext('2d');
+            const dispersedData = calculateDispersedPoints(ideas);
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const isInitialNarrow = (canvasEl.parentElement && canvasEl.parentElement.clientWidth < 480) || window.innerWidth < 576;
+            const isInitialMedium = !isInitialNarrow && window.innerWidth < 992;
+
+            scatterChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Ide Fitur',
+                        data: dispersedData,
+                        backgroundColor: dispersedData.map(d => d.color),
+                        borderColor: '#ffffff',
+                        borderWidth: 2.5,
+                        pointRadius: dispersedData.map(d => d.isFilteredOut ? 5 : 8),
+                        pointHoverRadius: 11,
+                        pointHoverBorderWidth: 3,
+                        pointHoverBorderColor: '#0f766e'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 350 },
+                    layout: { padding: isInitialNarrow ? { top: 8, right: 10, bottom: 6, left: 4 } : { top: 16, right: 18, bottom: 12, left: 12 } },
+                    onResize: function (chart) {
+                        syncChartResponsiveLabels(chart);
+                    },
+                    onHover: function (event, elements) {
+                        if (event && event.native && event.native.target) {
+                            event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
+                        }
+                    },
+                    onClick: function (event, elements) {
+                        if (elements && elements.length > 0) {
+                            const idx = elements[0].index;
+                            const pt = scatterChart.data.datasets[0].data[idx];
+                            if (pt && pt.id) {
+                                openEditIdeaModal(pt.id);
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            min: 0.5,
+                            max: 6.5,
+                            ticks: {
+                                stepSize: 1,
+                                callback: function (val) {
+                                    if (![1, 2, 3, 4, 5].includes(val)) return '';
+                                    const narrow = this.chart && this.chart.width < 480;
+                                    return narrow ? String(val) : val + ' (Feas)';
+                                },
+                                font: { family: 'Plus Jakarta Sans', weight: '600', size: 11 },
+                                color: isDark ? '#94a3b8' : '#475569'
+                            },
+                            grid: { color: isDark ? '#1e293b' : '#e2e8f0', lineWidth: 1 },
+                            title: {
+                                display: true,
+                                text: isInitialNarrow ? 'Feasibility (X: 1-5)' : (isInitialMedium ? 'Kelayakan Teknis (Feasibility: 1-5)' : 'Kelayakan Teknis (Feasibility: 1 = Sangat Sulit, 5 = Sangat Mudah)'),
+                                color: isDark ? '#2dd4bf' : '#0f766e',
+                                font: { family: 'Plus Jakarta Sans', weight: '700', size: 12 },
+                                padding: { top: 6 }
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            min: 0.5,
+                            max: 6.5,
+                            ticks: {
+                                stepSize: 1,
+                                callback: function (val) {
+                                    if (![1, 2, 3, 4, 5].includes(val)) return '';
+                                    const narrow = this.chart && this.chart.width < 480;
+                                    return narrow ? String(val) : val + ' (Impact)';
+                                },
+                                font: { family: 'Plus Jakarta Sans', weight: '600', size: 11 },
+                                color: isDark ? '#94a3b8' : '#475569'
+                            },
+                            grid: { color: isDark ? '#1e293b' : '#e2e8f0', lineWidth: 1 },
+                            title: {
+                                display: true,
+                                text: isInitialNarrow ? 'Impact (Y: 1-5)' : (isInitialMedium ? 'Dampak Bisnis (Impact: 1-5)' : 'Dampak Bisnis (Impact: 1 = Sangat Rendah, 5 = Sangat Tinggi)'),
+                                color: isDark ? '#2dd4bf' : '#0f766e',
+                                font: { family: 'Plus Jakarta Sans', weight: '700', size: 12 },
+                                padding: { bottom: 6 }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            enabled: true,
+                            backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                            titleColor: isDark ? '#f8fafc' : '#0f172a',
+                            bodyColor: isDark ? '#cbd5e1' : '#334155',
+                            titleFont: { family: 'Plus Jakarta Sans', weight: 'bold', size: 13 },
+                            bodyFont: { family: 'Plus Jakarta Sans', size: 12 },
+                            padding: 14,
+                            cornerRadius: 10,
+                            boxPadding: 6,
+                            borderColor: isDark ? '#334155' : '#cbd5e1',
+                            borderWidth: 1,
+                            callbacks: {
+                                title: (c) => c[0].raw.name,
+                                label: (c) => [
+                                    `Kelayakan (X): ${c.raw.actualFeasibility} / 5`,
+                                    `Dampak Bisnis (Y): ${c.raw.actualImpact} / 5`,
+                                    `Total Skor: ${c.raw.totalScore} / 10`,
+                                    `Kuadran: ${c.raw.quadrant}`,
+                                    'Klik titik untuk edit / hapus'
+                                ]
+                            }
+                        }
+                    }
+                },
+                plugins: [quadrantBackgroundPlugin]
+            });
+        }
+
+        function updateChart() {
+            if (chartEmptyState) {
+                chartEmptyState.classList.toggle('d-none', ideas.length > 0);
+            }
+            if (!scatterChart) return;
+            const dispersedData = calculateDispersedPoints(ideas);
+            scatterChart.data.datasets[0].data = dispersedData;
+            scatterChart.data.datasets[0].backgroundColor = dispersedData.map(d => d.color);
+            scatterChart.data.datasets[0].pointRadius = dispersedData.map(d => d.isFilteredOut ? 5 : 8);
+            scatterChart.update();
+        }
+
+        function filterChartByQuadrant(quadrantKey) {
+            activeChartFilter = quadrantKey;
+
+            const buttons = {
+                'ALL': document.getElementById('filterBtnAll'),
+                'Q1': document.getElementById('filterBtnQ1'),
+                'Q2': document.getElementById('filterBtnQ2'),
+                'Q3': document.getElementById('filterBtnQ3'),
+                'Q4': document.getElementById('filterBtnQ4')
+            };
+
+            Object.keys(buttons).forEach(key => {
+                if (buttons[key]) {
+                    if (key === quadrantKey) buttons[key].classList.add('active');
+                    else buttons[key].classList.remove('active');
+                }
+            });
+
+            const kpiTiles = {
+                'ALL': document.getElementById('kpiTileTotal'),
+                'Q1': document.getElementById('kpiTileQ1'),
+                'Q2': document.getElementById('kpiTileQ2'),
+                'Q3': document.getElementById('kpiTileQ3'),
+                'Q4': document.getElementById('kpiTileQ4')
+            };
+
+            Object.keys(kpiTiles).forEach(key => {
+                if (kpiTiles[key]) {
+                    if (key === quadrantKey) kpiTiles[key].classList.add('active-filter');
+                    else kpiTiles[key].classList.remove('active-filter');
+                }
+            });
+
+            updateChart();
+        }
+
+        function animateValue(element, targetValue) {
+            return window.StokIn.animateValue(element, targetValue);
+        }
+
+        function renderStats() {
+            const total = ideas.length;
+            animateValue(statTotal, total);
+            if (navIdeaCountBadge) {
+                navIdeaCountBadge.textContent = total;
+            }
+
+            let q1 = 0, q2 = 0, q3 = 0, q4 = 0;
+
+            ideas.forEach(item => {
+                const ev = evaluateIdea(item.feasibility, item.impact);
+                if (ev.quadrantKey === 'Q1') q1++;
+                else if (ev.quadrantKey === 'Q2') q2++;
+                else if (ev.quadrantKey === 'Q3') q3++;
+                else if (ev.quadrantKey === 'Q4') q4++;
+            });
+
+            animateValue(statQ1, q1);
+            animateValue(statQ2, q2);
+            animateValue(statQ3, q3);
+            animateValue(statQ4, q4);
+
+            const pct = (count) => total > 0 ? `${Math.round((count / total) * 100)}%` : '0%';
+            if (barQ1) barQ1.style.width = pct(q1);
+            if (barQ2) barQ2.style.width = pct(q2);
+            if (barQ3) barQ3.style.width = pct(q3);
+            if (barQ4) barQ4.style.width = pct(q4);
+        }
+
+        function renderRecommendation() {
+            const q1Ideas = ideas.filter(item => {
+                const ev = evaluateIdea(item.feasibility, item.impact);
+                return ev.quadrantKey === 'Q1';
+            });
+
+            if (q1Ideas.length === 0) {
+                recommendationContainer.innerHTML = `
+                    <div class="modern-card p-4 p-md-5 text-center">
+                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center p-3 mb-3 stokin-teal-chip"
+                            style="width: 64px; height: 64px;">
+                            <i class="bi bi-compass fs-2"></i>
+                        </div>
+                        <h3 class="h5 fw-bold" style="color: var(--stokin-text-primary);">Belum Ada Ide di Kuadran Prioritas Utama (Q1)</h3>
+                        <p class="text-muted small mb-3 max-w-lg mx-auto" style="max-width: 520px;">
+                            Ide prioritas utama membutuhkan nilai <strong>Feasibility &ge; 4</strong> dan <strong>Impact &ge; 4</strong>. 
+                            Tambahkan ide baru atau muat data ide LKPD revisi Anda.
+                        </p>
+                        <div class="d-flex justify-content-center gap-2 flex-wrap">
+                            <button type="button" class="btn-modern-primary" data-bs-toggle="modal" data-bs-target="#ideaModal">
+                                <i class="bi bi-plus-circle-fill"></i>
+                                <span>Tambahkan Ide Q1 Sekarang</span>
+                            </button>
+                            <button type="button" class="btn-modern-outline" onclick="window.stokinCtrl && window.stokinCtrl.openLkpdModal()">
+                                <i class="bi bi-journal-check" style="color: var(--stokin-teal-600);"></i>
+                                <span>Revisi &amp; Muat LKPD</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const sortedQ1 = [...q1Ideas].sort((a, b) => {
+                const scoreA = Number(a.feasibility) + Number(a.impact);
+                const scoreB = Number(b.feasibility) + Number(b.impact);
+                if (scoreB !== scoreA) return scoreB - scoreA;
+                if (b.impact !== a.impact) return b.impact - a.impact;
+                return b.feasibility - a.feasibility;
+            });
+
+            const topIdea = sortedQ1[0];
+            const topScore = Number(topIdea.feasibility) + Number(topIdea.impact);
+            const otherContenders = sortedQ1.slice(1, 4);
+
+            recommendationContainer.innerHTML = `
+                <div class="hero-mvp-card p-3 p-sm-4 p-lg-5 animate-fade-in">
+                    <div class="row align-items-center g-4">
+                        
+                        <div class="col-lg-8">
+                            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-3">
+                                <div class="hero-top-pill">
+                                    <span>🏆</span>
+                                    <span>REKOMENDASI PRODUK PRIORITAS (MVP)</span>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" style="border-radius: 8px; color: var(--stokin-text-secondary); border-color: var(--stokin-border);" onclick="openEditIdeaModal('${escapeHtml(topIdea.id)}')">
+                                    <i class="bi bi-pencil-square me-1"></i>Edit Ide Ini
+                                </button>
+                            </div>
+                            
+                            <h3 class="h2 fw-bold mb-3" style="letter-spacing: -0.025em; line-height: 1.25; color: var(--stokin-text-primary);">
+                                ${escapeHtml(topIdea.name)}
+                            </h3>
+
+                            <div class="d-flex align-items-center gap-2 flex-wrap mb-4">
+                                <span class="badge px-3 py-2 fw-bold border" style="font-size: 0.85rem; background: var(--stokin-surface); color: var(--stokin-text-primary); border-color: var(--stokin-border) !important;">
+                                    Total Skor: ${topScore} / 10
+                                </span>
+                                <span class="badge px-3 py-2" style="background: var(--stokin-surface); color: var(--stokin-teal-600); border: 1px solid var(--stokin-border);">
+                                    Feasibility: ${topIdea.feasibility}/5 &bull; Impact: ${topIdea.impact}/5
+                                </span>
+                                <span class="badge px-3 py-2 fw-bold" style="background: var(--q1-bg); color: var(--q1-text); border: 1px solid var(--q1-border);">
+                                    ⭐ Kuadran 1: Prioritas Utama
+                                </span>
+                            </div>
+
+                            <!-- Rationale Narrative Box -->
+                            <div class="p-3 rounded-3 mb-4" style="background: var(--stokin-surface); border: 1px solid var(--stokin-border); box-shadow: var(--shadow-subtle);">
+                                <h4 class="h6 fw-bold mb-2" style="color: var(--stokin-teal-600);">
+                                    <i class="bi bi-file-earmark-check-fill me-1"></i> Narasi Rasionalisasi Pemilihan Produk:
+                                </h4>
+                                <p class="mb-0" style="font-size: 0.88rem; line-height: 1.6; color: var(--stokin-text-secondary);">
+                                    Fitur <strong>"${escapeHtml(topIdea.name)}"</strong> terpilih sebagai prioritas tertinggi untuk dikembangkan dalam MVP StokIn. 
+                                    Dengan skor kelayakan teknis yang tinggi (<strong>${topIdea.feasibility}/5</strong>), tim pengembang dapat membangun arsitektur integrasi data secara terukur tanpa risiko keterlambatan rilis. 
+                                    Dampak bisnis yang optimal (<strong>${topIdea.impact}/5</strong>) secara langsung menuntaskan masalah fatal merchant: mencegah selisih inventaris fisik dan digital yang memicu pembatalan pesanan marketplace dan penalti toko.
+                                </p>
+                            </div>
+
+                            <!-- 3-Phase Action Roadmap -->
+                            <div class="row g-2">
+                                <div class="col-12 col-sm-4">
+                                    <div class="roadmap-step">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="badge rounded-pill px-2 py-1 stokin-teal-chip" style="font-size: 0.68rem;">Fase 1</span>
+                                            <strong class="small" style="color: var(--stokin-text-primary);">Validasi API</strong>
+                                        </div>
+                                        <small class="text-muted d-block" style="font-size: 0.74rem;">Sinkronisasi webhook marketplace &amp; DB lokal</small>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-4">
+                                    <div class="roadmap-step">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="badge rounded-pill px-2 py-1 stokin-teal-chip" style="font-size: 0.68rem;">Fase 2</span>
+                                            <strong class="small" style="color: var(--stokin-text-primary);">Bangun MVP</strong>
+                                        </div>
+                                        <small class="text-muted d-block" style="font-size: 0.74rem;">Implementasi logika update otomatis stok</small>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-4">
+                                    <div class="roadmap-step">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="badge rounded-pill px-2 py-1 stokin-teal-chip" style="font-size: 0.68rem;">Fase 3</span>
+                                            <strong class="small" style="color: var(--stokin-text-primary);">Pilot Testing</strong>
+                                        </div>
+                                        <small class="text-muted d-block" style="font-size: 0.74rem;">Uji coba operasional pada 5 merchant mitra</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Side Column: Score Dials & Runner-up Contenders -->
+                        <div class="col-lg-4 stokin-hero-divider">
+                            
+                            <div class="mvp-score-dial mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="text-muted small">Kelayakan Teknis (Feasibility)</span>
+                                    <span class="fw-bold small" style="color: var(--stokin-text-primary);">${topIdea.feasibility} / 5</span>
+                                </div>
+                                <div class="kpi-bar-track">
+                                    <div class="kpi-bar-fill" style="width: ${(topIdea.feasibility / 5) * 100}%; background: var(--stokin-teal-600);"></div>
+                                </div>
+                            </div>
+
+                            <div class="mvp-score-dial mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="text-muted small">Dampak Bisnis (Impact)</span>
+                                    <span class="fw-bold small" style="color: var(--stokin-text-primary);">${topIdea.impact} / 5</span>
+                                </div>
+                                <div class="kpi-bar-track">
+                                    <div class="kpi-bar-fill" style="width: ${(topIdea.impact / 5) * 100}%; background: #2563eb;"></div>
+                                </div>
+                            </div>
+
+                            <!-- Contenders Box -->
+                            <div class="p-3 rounded-3" style="background: var(--stokin-surface); border: 1px solid var(--stokin-border); box-shadow: var(--shadow-subtle);">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="small fw-bold" style="color: var(--stokin-text-primary);">Kandidat Q1 Lainnya</span>
+                                    <span class="badge rounded-pill border" style="font-size: 0.7rem; background: var(--stokin-badge-bg); color: var(--stokin-badge-text); border-color: var(--stokin-border) !important;">
+                                        ${q1Ideas.length} Total Ide Q1
+                                    </span>
+                                </div>
+
+                                ${otherContenders.length > 0 ? `
+                                    <ul class="list-unstyled mb-0">
+                                        ${otherContenders.map((c, idx) => `
+                                            <li class="py-2 border-bottom d-flex justify-content-between align-items-center" style="border-color: var(--stokin-border) !important;">
+                                                <div class="d-flex align-items-center gap-2 text-truncate me-2">
+                                                    <span class="badge border" style="font-size: 0.68rem; background: var(--stokin-badge-bg); color: var(--stokin-badge-text); border-color: var(--stokin-border) !important;">#${idx + 2}</span>
+                                                    <a href="javascript:void(0)" class="small text-truncate fw-medium text-decoration-none" style="color: var(--stokin-text-primary);" title="Klik untuk edit: ${escapeHtml(c.name)}" onclick="openEditIdeaModal('${escapeHtml(c.id)}')">${escapeHtml(c.name)}</a>
+                                                </div>
+                                                <span class="badge border" style="font-size: 0.72rem; background: var(--stokin-surface); color: var(--stokin-text-primary); border-color: var(--stokin-border) !important;">${c.feasibility + c.impact} pts</span>
+                                            </li>
+                                        `).join('')}
+                                    </ul>
+                                ` : `
+                                    <p class="small text-muted mb-0">Hanya terdapat 1 ide di kuadran ini.</p>
+                                `}
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAll() {
+            renderStats();
+            renderRecommendation();
+            updateChart();
+        }
+
+        function selectFeasScore(score) {
+            feasibilitySelect.value = score;
+            const buttons = document.querySelectorAll('#feasibilityButtons .score-btn');
+            buttons.forEach(btn => {
+                if (parseInt(btn.getAttribute('data-score'), 10) === score) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            const labels = {
+                1: '1 - Sangat Sulit (Butuh riset arsitektur mendalam / biaya tinggi)',
+                2: '2 - Sulit (Butuh keahlian teknis ekstra / integrasi rumit)',
+                3: '3 - Sedang (Resource standar & alur kerja normal)',
+                4: '4 - Mudah (Tersedia dokumentasi & library jelas)',
+                5: '5 - Sangat Mudah (Cepat dibuat, teknologi siap & minim biaya)'
+            };
+            document.getElementById('feasibilityDescText').textContent = labels[score];
+            updateLivePreview();
+        }
+
+        function selectImpactScore(score) {
+            impactSelect.value = score;
+            const buttons = document.querySelectorAll('#impactButtons .score-btn');
+            buttons.forEach(btn => {
+                if (parseInt(btn.getAttribute('data-score'), 10) === score) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            const labels = {
+                1: '1 - Sangat Rendah (Dampak minim ke operasional harian)',
+                2: '2 - Rendah (Manfaat kecil / jarang dipakai kasir)',
+                3: '3 - Sedang (Membantu kelancaran transaksi harian toko)',
+                4: '4 - Tinggi (Meningkatkan efisiensi kerja & penjualan nyata)',
+                5: '5 - Sangat Tinggi (Krusial mencegah selisih stok & kerugian toko)'
+            };
+            document.getElementById('impactDescText').textContent = labels[score];
+            updateLivePreview();
+        }
+
+        function updateLivePreview() {
+            const f = feasibilitySelect.value;
+            const i = impactSelect.value;
+
+            if (!f || !i) {
+                previewBadge.className = 'badge bg-secondary-subtle text-secondary border';
+                previewBadge.textContent = 'Pilih Nilai';
+                previewFormulaText.textContent = 'Pilih skor kelayakan & dampak untuk kalkulasi';
+                return;
+            }
+
+            const ev = evaluateIdea(f, i);
+            previewBadge.className = ev.badgeClass;
+            previewBadge.textContent = `${ev.quadrant} (Total: ${ev.totalScore})`;
+            previewFormulaText.textContent = `Feas: ${f} + Impact: ${i} = ${ev.totalScore}/10 \u2022 ${ev.advice}`;
+        }
+
+        btnClearAll.addEventListener('click', function () {
+            if (ideas.length === 0) {
+                showNotification('Daftar ide sudah kosong.', 'bi-info-circle-fill text-info');
+                return;
+            }
+            if (confirm('Hapus semua data ide aktif saat ini dari matriks?')) {
+                ideas = [];
+                window.StokIn.saveIdeas(ideas);
+                renderAll();
+                showNotification('Semua data ide sebelumnya telah dihapus.', 'bi-trash-fill text-secondary');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            ideas = window.StokIn.loadIdeas();
+            initChart();
+            stokinCtrl = window.StokIn.initAppControllers({
+                getIdeas: () => ideas,
+                setIdeas: (next) => { ideas = next; },
+                onDataChanged: renderAll,
+                onThemeChange: updateChartTheme,
+                notify: showNotification,
+                selectFeasScore: selectFeasScore,
+                selectImpactScore: selectImpactScore,
+                updateLivePreview: updateLivePreview
+            });
+            window.stokinCtrl = stokinCtrl;
+            renderAll();
+            updateLivePreview();
+        });
+    </script>
+</body>
+
+</html>
