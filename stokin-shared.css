@@ -398,7 +398,7 @@ textarea:focus-visible {
     .table-controls-bar .dropdown .dropdown-toggle,
     .table-controls-bar #btnExportCSV {
         width: 100%;
-        min-height: 40px;
+        min-height: 44px;
         justify-content: center;
     }
 
@@ -599,4 +599,160 @@ textarea:focus-visible {
     color: var(--stokin-text-secondary);
     white-space: pre-wrap;
     overflow-wrap: break-word;
+}
+
+/* Quantity Report Section & Print Sheet */
+.report-summary-tile {
+    background-color: var(--stokin-card-subtle);
+    border: 1px solid var(--stokin-border);
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    min-width: 0;
+}
+
+.report-summary-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--stokin-text-muted);
+    margin-bottom: 0.3rem;
+}
+
+.report-summary-num {
+    font-size: clamp(1.2rem, 2.5vw, 1.55rem);
+    font-weight: 800;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 0.2rem;
+}
+
+.report-teal-val {
+    color: var(--stokin-teal-700);
+}
+
+[data-theme="dark"] .report-teal-val {
+    color: #5eead4;
+}
+
+.report-blue-val {
+    color: #1d4ed8;
+}
+
+[data-theme="dark"] .report-blue-val {
+    color: #93c5fd;
+}
+
+.report-dist-table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--stokin-text-primary);
+    --bs-table-border-color: var(--stokin-border);
+    font-size: 0.84rem;
+}
+
+.report-dist-table th {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--stokin-text-muted);
+    font-weight: 700;
+    border-bottom-width: 1px;
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+}
+
+.report-dist-table td {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    vertical-align: middle;
+}
+
+.report-mini-track {
+    height: 6px;
+    width: 100%;
+    border-radius: 999px;
+    background-color: var(--stokin-kpi-bar-track);
+    overflow: hidden;
+}
+
+.report-mini-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.35s var(--ease-out-smooth);
+}
+
+.report-score-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: 8px;
+    font-size: 0.76rem;
+    background-color: var(--stokin-surface);
+    color: var(--stokin-text-secondary);
+    border: 1px solid var(--stokin-border);
+}
+
+.report-score-chip strong {
+    color: var(--stokin-text-primary);
+}
+
+.report-action-bar > button {
+    min-height: 40px;
+}
+
+@media (max-width: 575.98px) {
+    .report-action-bar {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        gap: 0.5rem !important;
+    }
+
+    .report-action-bar > button {
+        width: 100%;
+        min-height: 44px;
+        font-size: 0.78rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+
+/* Dark-mode friendly Bootstrap dropdowns */
+.dropdown-menu {
+    background-color: var(--stokin-surface);
+    border-color: var(--stokin-border);
+    color: var(--stokin-text-primary);
+}
+
+.dropdown-item {
+    color: var(--stokin-text-primary);
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background-color: var(--stokin-hover-bg);
+    color: var(--stokin-text-primary);
+}
+
+.dropdown-divider {
+    border-color: var(--stokin-border);
+}
+
+#stokinPrintSheet {
+    display: none;
+}
+
+@media print {
+    body > *:not(#stokinPrintSheet) {
+        display: none !important;
+    }
+
+    #stokinPrintSheet {
+        display: block !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
 }

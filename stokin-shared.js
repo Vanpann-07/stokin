@@ -383,6 +383,758 @@
     }
 
     // ==========================================
+    // QUANTITY REPORT ENGINE & MULTI-FORMAT EXPORT
+    // ==========================================
+    function formatReportTimestamp(date = new Date()) {
+        try {
+            return new Intl.DateTimeFormat('id-ID', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).format(date);
+        } catch (e) {
+            return date.toISOString().slice(0, 16).replace('T', ' ');
+        }
+    }
+
+    function computeIdeasReport(list) {
+        const cleanIdeas = (Array.isArray(list) ? list : [])
+            .map(item => normalizeIdeaItem(item, false, 'rep'))
+            .filter(item => item.name.length > 0);
+
+        const totalIdeas = cleanIdeas.length;
+        let sumFeasibility = 0;
+        let sumImpact = 0;
+        let sumTotalScore = 0;
+        let minScore = totalIdeas > 0 ? Infinity : 0;
+        let maxScore = totalIdeas > 0 ? -Infinity : 0;
+
+        const feasQty = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        const impactQty = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        const totalScoreQty = {};
+        for (let s = 2; s <= 10; s++) totalScoreQty[s] = 0;
+
+        const quadMap = {
+            Q1: { key: 'Q1', title: '⭐ Q1: Prioritas Utama', shortLabel: 'Q1: Prioritas Utama', criteria: 'Feas >= 4 & Impact >= 4', count: 0, sumScore: 0, badgeClass: 'badge-q1', barColor: 'var(--q1-emerald)' },
+            Q2: { key: 'Q2', title: '💡 Q2: Potensi Tinggi', shortLabel: 'Q2: Potensi Tinggi', criteria: 'Feas < 4 & Impact >= 4', count: 0, sumScore: 0, badgeClass: 'badge-q2', barColor: 'var(--q2-blue)' },
+            Q3: { key: 'Q3', title: '⚠️ Q3: Pertimbangan', shortLabel: 'Q3: Pertimbangan', criteria: 'Feas >= 4 & Impact < 4', count: 0, sumScore: 0, badgeClass: 'badge-q3', barColor: 'var(--q3-amber)' },
+            Q4: { key: 'Q4', title: '💤 Q4: Tunda / Buang', shortLabel: 'Q4: Tunda / Buang', criteria: 'Feas < 4 & Impact < 4', count: 0, sumScore: 0, badgeClass: 'badge-q4', barColor: 'var(--q4-slate)' }
+        };
+
+        const enriched = cleanIdeas.map((item, idx) => {
+            const ev = evaluateIdea(item.feasibility, item.impact);
+            sumFeasibility += item.feasibility;
+            sumImpact += item.impact;
+            sumTotalScore += ev.totalScore;
+            if (ev.totalScore < minScore) minScore = ev.totalScore;
+            if (ev.totalScore > maxScore) maxScore = ev.totalScore;
+
+            feasQty[item.feasibility] = (feasQty[item.feasibility] || 0) + 1;
+            impactQty[item.impact] = (impactQty[item.impact] || 0) + 1;
+            totalScoreQty[ev.totalScore] = (totalScoreQty[ev.totalScore] || 0) + 1;
+
+            const qBucket = quadMap[ev.quadrantKey];
+            if (qBucket) {
+                qBucket.count += 1;
+                qBucket.sumScore += ev.totalScore;
+            }
+
+            return {
+                ...item,
+                originalIndex: idx,
+                totalScore: ev.totalScore,
+                quadrant: ev.quadrant,
+                quadrantKey: ev.quadrantKey,
+                badgeClass: ev.badgeClass,
+                advice: ev.advice
+            };
+        });
+
+        enriched.sort((a, b) => {
+            if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+            if (b.impact !== a.impact) return b.impact - a.impact;
+            if (b.feasibility !== a.feasibility) return b.feasibility - a.feasibility;
+            return a.originalIndex - b.originalIndex;
+        });
+
+        const rankedIdeas = enriched.map((item, idx) => ({ ...item, rank: idx + 1 }));
+        const toPct = (count) => totalIdeas > 0 ? Math.round((count / totalIdeas) * 100) : 0;
+
+        const scaleLabels = {
+            5: 'Skor 5 (Sangat Baik)',
+            4: 'Skor 4 (Baik)',
+            3: 'Skor 3 (Sedang)',
+            2: 'Skor 2 (Kurang)',
+            1: 'Skor 1 (Sangat Kurang)'
+        };
+
+        const scoreScale = [5, 4, 3, 2, 1].map(score => ({
+            score,
+            label: scaleLabels[score],
+            feasCount: feasQty[score],
+            feasPct: toPct(feasQty[score]),
+            impactCount: impactQty[score],
+            impactPct: toPct(impactQty[score])
+        }));
+
+        const totalScoreDistribution = [];
+        for (let totalScore = 10; totalScore >= 2; totalScore--) {
+            totalScoreDistribution.push({
+                totalScore,
+                count: totalScoreQty[totalScore],
+                pct: toPct(totalScoreQty[totalScore])
+            });
+        }
+
+        const quadrants = ['Q1', 'Q2', 'Q3', 'Q4'].map(key => {
+            const q = quadMap[key];
+            const avgScore = q.count > 0 ? Number((q.sumScore / q.count).toFixed(2)) : 0;
+            return {
+                ...q,
+                pct: toPct(q.count),
+                avgScore,
+                avgScoreText: q.count > 0 ? avgScore.toFixed(2) : '0.00'
+            };
+        });
+
+        let dominantQuadrant = null;
+        if (totalIdeas > 0) {
+            dominantQuadrant = quadrants.reduce((best, curr) => (curr.count > best.count ? curr : best), quadrants[0]);
+        }
+
+        const avgFeasibility = totalIdeas > 0 ? Number((sumFeasibility / totalIdeas).toFixed(2)) : 0;
+        const avgImpact = totalIdeas > 0 ? Number((sumImpact / totalIdeas).toFixed(2)) : 0;
+        const avgTotalScore = totalIdeas > 0 ? Number((sumTotalScore / totalIdeas).toFixed(2)) : 0;
+
+        return {
+            generatedAtLabel: formatReportTimestamp(),
+            totalIdeas,
+            sumFeasibility,
+            maxFeasibility: totalIdeas * 5,
+            avgFeasibility,
+            avgFeasibilityText: avgFeasibility.toFixed(2),
+            sumImpact,
+            maxImpact: totalIdeas * 5,
+            avgImpact,
+            avgImpactText: avgImpact.toFixed(2),
+            sumTotalScore,
+            maxTotalScore: totalIdeas * 10,
+            avgTotalScore,
+            avgTotalScoreText: avgTotalScore.toFixed(2),
+            minScore,
+            maxScore,
+            quadrants,
+            dominantQuadrant,
+            scoreScale,
+            totalScoreDistribution,
+            rankedIdeas,
+            topIdea: rankedIdeas[0] || null
+        };
+    }
+
+    function csvEscapeCell(val) {
+        return `"${String(val === null || val === undefined ? '' : val).replace(/"/g, '""')}"`;
+    }
+
+    function exportReportToCsv(list, filename = 'stokin_laporan_quantity_nilai.csv') {
+        const rep = computeIdeasReport(list);
+        const lines = [];
+        const addRow = (cols) => lines.push(cols.map(csvEscapeCell).join(','));
+
+        addRow(['LAPORAN HASIL & QUANTITY NILAI IDE MATRIKS PRIORITAS STOKIN']);
+        addRow(['Tanggal Ekspor', rep.generatedAtLabel]);
+        lines.push('');
+
+        addRow(['BAGIAN 1: RINGKASAN AKUMULASI & RATA-RATA NILAI']);
+        addRow(['Metrik', 'Nilai / Quantity', 'Keterangan']);
+        addRow(['Jumlah Total Ide', rep.totalIdeas, 'Total fitur aktif yang dievaluasi']);
+        addRow(['Total Poin Feasibility (X)', `${rep.sumFeasibility} / ${rep.maxFeasibility}`, `Rata-rata ${rep.avgFeasibilityText} dari 5`]);
+        addRow(['Total Poin Impact (Y)', `${rep.sumImpact} / ${rep.maxImpact}`, `Rata-rata ${rep.avgImpactText} dari 5`]);
+        addRow(['Akumulasi Total Skor (X+Y)', `${rep.sumTotalScore} / ${rep.maxTotalScore}`, `Rata-rata ${rep.avgTotalScoreText} dari 10`]);
+        addRow(['Rentang Skor Gabungan', rep.totalIdeas > 0 ? `${rep.minScore} s.d. ${rep.maxScore}` : '0', 'Skor terendah hingga tertinggi']);
+        addRow(['Kuadran Dominan', rep.dominantQuadrant ? `${rep.dominantQuadrant.shortLabel} (${rep.dominantQuadrant.count} ide / ${rep.dominantQuadrant.pct}%)` : '-', 'Kuadran dengan jumlah ide terbanyak']);
+        addRow(['Rekomendasi MVP #1', rep.topIdea ? `${rep.topIdea.name} (Skor ${rep.topIdea.totalScore}/10)` : '-', 'Prioritas implementasi teratas']);
+        lines.push('');
+
+        addRow(['BAGIAN 2: QUANTITY IDE PER KUADRAN']);
+        addRow(['Kuadran', 'Kriteria Matriks', 'Quantity (Jumlah Ide)', 'Persentase', 'Total Poin Skor', 'Rata-rata Skor']);
+        rep.quadrants.forEach(q => {
+            addRow([q.shortLabel, q.criteria, q.count, `${q.pct}%`, q.sumScore, q.avgScoreText]);
+        });
+        lines.push('');
+
+        addRow(['BAGIAN 3: QUANTITY NILAI PER SKALA SKOR (1-5)']);
+        addRow(['Skala Nilai', 'Kategori', 'Qty Feasibility (X)', '% Feasibility', 'Qty Impact (Y)', '% Impact']);
+        rep.scoreScale.forEach(row => {
+            addRow([row.score, row.label, row.feasCount, `${row.feasPct}%`, row.impactCount, `${row.impactPct}%`]);
+        });
+        lines.push('');
+
+        addRow(['BAGIAN 4: QUANTITY IDE BERDASARKAN TOTAL SKOR GABUNGAN (2-10)']);
+        addRow(['Total Skor (X + Y)', 'Quantity (Jumlah Ide)', 'Persentase']);
+        rep.totalScoreDistribution.forEach(item => {
+            addRow([`${item.totalScore} / 10`, item.count, `${item.pct}%`]);
+        });
+        lines.push('');
+
+        addRow(['BAGIAN 5: DAFTAR PERINGKAT LENGKAP IDE FITUR']);
+        addRow(['Peringkat', 'Nama Ide Fitur', 'Feasibility (X)', 'Impact (Y)', 'Total Skor', 'Kuadran', 'Rekomendasi']);
+        rep.rankedIdeas.forEach(item => {
+            addRow([item.rank, item.name, item.feasibility, item.impact, item.totalScore, item.quadrant, item.advice]);
+        });
+
+        downloadFile('\uFEFF' + lines.join('\n'), filename, 'text/csv;charset=utf-8;');
+        return rep;
+    }
+
+    function buildPrintableReportBodyHtml(rep) {
+        const scoreRowsHtml = rep.scoreScale.map(row => `
+            <tr>
+                <td><strong>Skor ${row.score}</strong> <span class="rep-muted">(${escapeHtml(row.label.replace(/^Skor \d+\s*/, ''))})</span></td>
+                <td class="rep-num">${row.feasCount} ide (${row.feasPct}%)</td>
+                <td class="rep-num">${row.impactCount} ide (${row.impactPct}%)</td>
+            </tr>
+        `).join('');
+
+        const quadRowsHtml = rep.quadrants.map(q => `
+            <tr>
+                <td><strong>${escapeHtml(q.title)}</strong><br><span class="rep-muted">${escapeHtml(q.criteria)}</span></td>
+                <td class="rep-num"><strong>${q.count}</strong> ide</td>
+                <td class="rep-num">${q.pct}%</td>
+                <td class="rep-num">${q.sumScore} pts</td>
+                <td class="rep-num">${q.avgScoreText}</td>
+            </tr>
+        `).join('');
+
+        const totalDistChipsHtml = rep.totalScoreDistribution
+            .filter(d => d.count > 0)
+            .map(d => `<span class="rep-chip"><strong>Skor ${d.totalScore}/10:</strong> ${d.count} ide (${d.pct}%)</span>`)
+            .join('') || '<span class="rep-muted">Belum ada data skor.</span>';
+
+        const rankedRowsHtml = rep.rankedIdeas.map(item => `
+            <tr>
+                <td class="rep-num">#${item.rank}</td>
+                <td><strong>${escapeHtml(item.name)}</strong><br><span class="rep-muted">${escapeHtml(item.advice)}</span></td>
+                <td class="rep-num">${item.feasibility} / 5</td>
+                <td class="rep-num">${item.impact} / 5</td>
+                <td class="rep-num"><strong>${item.totalScore}</strong></td>
+                <td>${escapeHtml(item.quadrant)}</td>
+            </tr>
+        `).join('');
+
+        return `
+            <div class="rep-doc-wrap">
+                <div class="rep-header">
+                    <div>
+                        <div class="rep-brand">STOKIN &bull; LAPORAN VALIDASI LKPD KEWIRAUSAHAAN</div>
+                        <h1 class="rep-title">Laporan Hasil &amp; Rekapitulasi Quantity Nilai Ide</h1>
+                        <p class="rep-sub">Matriks Prioritas Feasibility (X) vs Impact (Y) untuk ${rep.totalIdeas} ide fitur terdaftar</p>
+                    </div>
+                    <div class="rep-meta">
+                        <div><strong>Tanggal Cetak:</strong> ${escapeHtml(rep.generatedAtLabel)}</div>
+                        <div><strong>Total Ide:</strong> ${rep.totalIdeas} item</div>
+                    </div>
+                </div>
+
+                <div class="rep-kpis">
+                    <div class="rep-kpi">
+                        <div class="rep-kpi-label">Total Poin Feasibility (X)</div>
+                        <div class="rep-kpi-val">${rep.sumFeasibility} / ${rep.maxFeasibility}</div>
+                        <div class="rep-kpi-note">Rata-rata ${rep.avgFeasibilityText} dari 5</div>
+                    </div>
+                    <div class="rep-kpi">
+                        <div class="rep-kpi-label">Total Poin Impact (Y)</div>
+                        <div class="rep-kpi-val">${rep.sumImpact} / ${rep.maxImpact}</div>
+                        <div class="rep-kpi-note">Rata-rata ${rep.avgImpactText} dari 5</div>
+                    </div>
+                    <div class="rep-kpi">
+                        <div class="rep-kpi-label">Akumulasi Total Skor</div>
+                        <div class="rep-kpi-val">${rep.sumTotalScore} / ${rep.maxTotalScore}</div>
+                        <div class="rep-kpi-note">Rata-rata ${rep.avgTotalScoreText} dari 10</div>
+                    </div>
+                    <div class="rep-kpi">
+                        <div class="rep-kpi-label">Prioritas MVP #1</div>
+                        <div class="rep-kpi-val">${rep.topIdea ? `${rep.topIdea.totalScore} / 10` : '-'}</div>
+                        <div class="rep-kpi-note">${rep.topIdea ? escapeHtml(rep.topIdea.name) : 'Belum ada data'}</div>
+                    </div>
+                </div>
+
+                <div class="rep-grid-2">
+                    <div class="rep-box">
+                        <h2 class="rep-h2">Quantity Nilai per Skala (1-5)</h2>
+                        <table class="rep-table">
+                            <thead>
+                                <tr>
+                                    <th>Skala Nilai</th>
+                                    <th class="rep-num">Qty Feasibility (X)</th>
+                                    <th class="rep-num">Qty Impact (Y)</th>
+                                </tr>
+                            </thead>
+                            <tbody>${scoreRowsHtml}</tbody>
+                        </table>
+                        <div class="rep-subbox">
+                            <div class="rep-sublabel">Quantity Berdasarkan Total Skor (X + Y):</div>
+                            <div class="rep-chips">${totalDistChipsHtml}</div>
+                        </div>
+                    </div>
+
+                    <div class="rep-box">
+                        <h2 class="rep-h2">Quantity Ide per Kuadran (Q1-Q4)</h2>
+                        <table class="rep-table">
+                            <thead>
+                                <tr>
+                                    <th>Kuadran</th>
+                                    <th class="rep-num">Qty</th>
+                                    <th class="rep-num">%</th>
+                                    <th class="rep-num">Poin</th>
+                                    <th class="rep-num">Rata2</th>
+                                </tr>
+                            </thead>
+                            <tbody>${quadRowsHtml}</tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="rep-box">
+                    <h2 class="rep-h2">Daftar Peringkat Lengkap (${rep.totalIdeas} Ide)</h2>
+                    <table class="rep-table">
+                        <thead>
+                            <tr>
+                                <th class="rep-num">Rank</th>
+                                <th>Nama Ide Fitur &amp; Rekomendasi</th>
+                                <th class="rep-num">Feas (X)</th>
+                                <th class="rep-num">Imp (Y)</th>
+                                <th class="rep-num">Skor</th>
+                                <th>Kuadran</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rankedRowsHtml || '<tr><td colspan="6">Belum ada data ide aktif.</td></tr>'}</tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    const REPORT_PRINT_CSS = `
+        .rep-doc-wrap { font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #0f172a; line-height: 1.45; }
+        .rep-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; border-bottom: 2px solid #0f766e; padding-bottom: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+        .rep-brand { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: #0f766e; margin-bottom: 4px; }
+        .rep-title { font-size: 20px; font-weight: 800; margin: 0 0 4px 0; color: #0f172a; }
+        .rep-sub { font-size: 13px; color: #475569; margin: 0; }
+        .rep-meta { font-size: 12px; color: #334155; text-align: right; }
+        .rep-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+        .rep-kpi { border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 12px; background: #f8fafc; }
+        .rep-kpi-label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.03em; }
+        .rep-kpi-val { font-size: 18px; font-weight: 800; color: #0f172a; margin: 4px 0 2px; }
+        .rep-kpi-note { font-size: 11px; color: #475569; }
+        .rep-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px; }
+        .rep-box { border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px 14px; background: #ffffff; margin-bottom: 14px; break-inside: avoid; }
+        .rep-grid-2 .rep-box { margin-bottom: 0; }
+        .rep-h2 { font-size: 14px; font-weight: 700; margin: 0 0 10px 0; color: #0f766e; }
+        .rep-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .rep-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; color: #475569; border-bottom: 1.5px solid #cbd5e1; padding: 6px; background: #f8fafc; }
+        .rep-table td { border-bottom: 1px solid #e2e8f0; padding: 6px; vertical-align: top; }
+        .rep-num { text-align: center !important; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .rep-muted { font-size: 11px; color: #64748b; }
+        .rep-subbox { margin-top: 10px; padding-top: 8px; border-top: 1px dashed #cbd5e1; }
+        .rep-sublabel { font-size: 11px; font-weight: 700; color: #334155; margin-bottom: 6px; }
+        .rep-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .rep-chip { font-size: 11px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 3px 8px; }
+        @media (max-width: 720px) { .rep-kpis, .rep-grid-2 { grid-template-columns: 1fr; } .rep-meta { text-align: left; } }
+    `;
+
+    function buildReportHtmlDocument(list) {
+        const rep = computeIdeasReport(list);
+        return `<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Hasil Quantity Nilai Ide - StokIn</title>
+    <style>
+        body { margin: 24px auto; max-width: 980px; padding: 0 16px; background: #ffffff; }
+        ${REPORT_PRINT_CSS}
+        @media print { body { margin: 0; max-width: 100%; padding: 0; } }
+    </style>
+</head>
+<body>
+    ${buildPrintableReportBodyHtml(rep)}
+</body>
+</html>`;
+    }
+
+    function exportReportToHtml(list, filename = 'stokin_laporan_hasil_lkpd.html') {
+        const rep = computeIdeasReport(list);
+        downloadFile(buildReportHtmlDocument(list), filename, 'text/html;charset=utf-8;');
+        return rep;
+    }
+
+    function buildReportPlainText(list) {
+        const rep = computeIdeasReport(list);
+        if (rep.totalIdeas === 0) {
+            return 'LAPORAN HASIL STOKIN: Belum ada data ide aktif untuk dirangkum.';
+        }
+
+        const quadLines = rep.quadrants.map(q =>
+            `- ${q.shortLabel}: ${q.count} ide (${q.pct}%) | Total Poin: ${q.sumScore} | Rata-rata: ${q.avgScoreText}`
+        ).join('\n');
+
+        const scaleLines = rep.scoreScale.map(s =>
+            `- Skor ${s.score}: Feasibility = ${s.feasCount} ide (${s.feasPct}%) | Impact = ${s.impactCount} ide (${s.impactPct}%)`
+        ).join('\n');
+
+        const scoreDistLines = rep.totalScoreDistribution
+            .filter(d => d.count > 0)
+            .map(d => `- Total Skor ${d.totalScore}/10: ${d.count} ide (${d.pct}%)`)
+            .join('\n');
+
+        const rankedLines = rep.rankedIdeas.map(item =>
+            `${item.rank}. ${item.name} | Feas: ${item.feasibility}/5 | Imp: ${item.impact}/5 | Total: ${item.totalScore}/10 | ${item.quadrant}`
+        ).join('\n');
+
+        return [
+            'LAPORAN HASIL & QUANTITY NILAI IDE STOKIN',
+            `Tanggal: ${rep.generatedAtLabel}`,
+            '',
+            '1. RINGKASAN AKUMULASI & RATA-RATA',
+            `- Total Ide Terdaftar: ${rep.totalIdeas} ide`,
+            `- Total Poin Feasibility (X): ${rep.sumFeasibility} / ${rep.maxFeasibility} (Rata-rata: ${rep.avgFeasibilityText})`,
+            `- Total Poin Impact (Y): ${rep.sumImpact} / ${rep.maxImpact} (Rata-rata: ${rep.avgImpactText})`,
+            `- Akumulasi Total Skor (X+Y): ${rep.sumTotalScore} / ${rep.maxTotalScore} (Rata-rata: ${rep.avgTotalScoreText})`,
+            `- Rentang Skor: ${rep.minScore} s.d. ${rep.maxScore}`,
+            `- Prioritas MVP #1: ${rep.topIdea ? `${rep.topIdea.name} (Skor ${rep.topIdea.totalScore}/10)` : '-'}`,
+            '',
+            '2. QUANTITY PER KUADRAN',
+            quadLines,
+            '',
+            '3. QUANTITY PER SKALA SKOR (1-5)',
+            scaleLines,
+            '',
+            '4. QUANTITY PER TOTAL SKOR (2-10)',
+            scoreDistLines,
+            '',
+            '5. PERINGKAT LENGKAP IDE',
+            rankedLines
+        ].join('\n');
+    }
+
+    function copyReportSummary(list, notify) {
+        const text = buildReportPlainText(list);
+        const onDone = () => {
+            if (typeof notify === 'function') notify('Ringkasan laporan quantity nilai disalin ke clipboard.');
+        };
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            navigator.clipboard.writeText(text).then(onDone).catch(() => {
+                fallbackCopyText(text);
+                onDone();
+            });
+            return;
+        }
+        fallbackCopyText(text);
+        onDone();
+    }
+
+    function fallbackCopyText(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+    }
+
+    function printReport(list) {
+        const rep = computeIdeasReport(list);
+        let sheet = document.getElementById('stokinPrintSheet');
+        if (!sheet) {
+            sheet = document.createElement('div');
+            sheet.id = 'stokinPrintSheet';
+            document.body.appendChild(sheet);
+        }
+        sheet.innerHTML = `<style>${REPORT_PRINT_CSS}</style>${buildPrintableReportBodyHtml(rep)}`;
+        const cleanup = () => {
+            if (sheet) sheet.innerHTML = '';
+        };
+        window.addEventListener('afterprint', cleanup, { once: true });
+        window.print();
+    }
+
+    function runReportExportAction(act, list, notify) {
+        const items = Array.isArray(list) ? list : [];
+        if (items.length === 0) {
+            if (typeof notify === 'function') notify('Belum ada data ide untuk diexport!', 'bi-exclamation-triangle-fill text-warning');
+            return;
+        }
+        if (act === 'csv') {
+            exportReportToCsv(items);
+            if (typeof notify === 'function') notify('Laporan lengkap quantity nilai diexport ke CSV!');
+        } else if (act === 'html') {
+            exportReportToHtml(items);
+            if (typeof notify === 'function') notify('Dokumen laporan HTML berhasil diunduh!');
+        } else if (act === 'print') {
+            printReport(items);
+        } else if (act === 'copy') {
+            copyReportSummary(items, notify);
+        }
+    }
+
+    function renderQuantityReportSection(target, list, options = {}) {
+        const container = typeof target === 'string' ? document.querySelector(target) : target;
+        if (!container) return null;
+
+        const notify = options.notify;
+        const rep = computeIdeasReport(list);
+        const showHeader = options.hideHeader !== true;
+        const suffix = options.idSuffix || 'inline';
+
+        const exportBarHtml = `
+            <div class="d-flex flex-wrap align-items-center gap-2 report-action-bar">
+                <button type="button" class="btn-modern-primary btn-sm js-rep-csv" data-rep-action="csv" ${rep.totalIdeas === 0 ? 'disabled' : ''}>
+                    <i class="bi bi-file-earmark-spreadsheet"></i>
+                    <span>Export Laporan CSV</span>
+                </button>
+                <button type="button" class="btn-modern-outline btn-sm js-rep-html" data-rep-action="html" ${rep.totalIdeas === 0 ? 'disabled' : ''}>
+                    <i class="bi bi-filetype-html" style="color: var(--stokin-teal-600);"></i>
+                    <span>Unduh HTML</span>
+                </button>
+                <button type="button" class="btn-modern-outline btn-sm js-rep-print" data-rep-action="print" ${rep.totalIdeas === 0 ? 'disabled' : ''}>
+                    <i class="bi bi-printer" style="color: var(--stokin-teal-600);"></i>
+                    <span>Cetak / PDF</span>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center gap-1 js-rep-copy" data-rep-action="copy" style="border-radius: 9px; color: var(--stokin-text-secondary); border-color: var(--stokin-border);" ${rep.totalIdeas === 0 ? 'disabled' : ''}>
+                    <i class="bi bi-clipboard-check"></i>
+                    <span>Salin Teks</span>
+                </button>
+            </div>
+        `;
+
+        const headerHtml = showHeader ? `
+            <div class="modern-card-header">
+                <div class="d-flex align-items-center gap-2 min-w-0">
+                    <div class="rounded-3 d-flex align-items-center justify-content-center stokin-teal-chip flex-shrink-0" style="width: 38px; height: 38px;">
+                        <i class="bi bi-clipboard-data-fill fs-5"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h2 class="h6 mb-0 fw-bold" style="color: var(--stokin-text-primary);">Laporan Hasil &amp; Quantity Nilai Ide</h2>
+                        <small class="text-muted">Rekapitulasi ${rep.totalIdeas} ide: akumulasi poin, frekuensi skala 1-5, &amp; distribusi kuadran</small>
+                    </div>
+                </div>
+                ${exportBarHtml}
+            </div>
+        ` : `<div class="mb-3 d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2">
+            <small class="text-muted">Rekapitulasi <strong>${rep.totalIdeas}</strong> ide aktif siap ekspor</small>
+            ${exportBarHtml}
+        </div>`;
+
+        if (rep.totalIdeas === 0) {
+            container.innerHTML = `
+                <div class="${showHeader ? 'modern-card' : ''}" id="quantityReportCard-${suffix}">
+                    ${headerHtml}
+                    <div class="p-4 text-center">
+                        <i class="bi bi-bar-chart-line fs-2 text-muted d-block mb-2"></i>
+                        <div class="fw-bold small mb-1" style="color: var(--stokin-text-primary);">Belum Ada Data untuk Laporan Quantity Nilai</div>
+                        <p class="small text-muted mb-0">Tambahkan minimal 1 ide fitur atau muat data LKPD untuk melihat rekapitulasi nilai dan mengekspor laporan.</p>
+                    </div>
+                </div>
+            `;
+        } else {
+            const scaleRowsHtml = rep.scoreScale.map(row => `
+                <tr>
+                    <td class="fw-semibold" style="color: var(--stokin-text-primary);">
+                        <span class="badge border me-1" style="background: var(--stokin-badge-bg); color: var(--stokin-badge-text); border-color: var(--stokin-border) !important;">${row.score}</span>
+                        <span class="small text-muted d-none d-sm-inline">${escapeHtml(row.label.replace(/^Skor \d+\s*/, ''))}</span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center justify-content-between gap-2 small">
+                            <span class="fw-bold report-teal-val" style="font-variant-numeric: tabular-nums;">${row.feasCount} ide</span>
+                            <span class="text-muted">${row.feasPct}%</span>
+                        </div>
+                        <div class="report-mini-track mt-1">
+                            <div class="report-mini-fill" style="width: ${row.feasPct}%; background: var(--stokin-teal-600);"></div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center justify-content-between gap-2 small">
+                            <span class="fw-bold report-blue-val" style="font-variant-numeric: tabular-nums;">${row.impactCount} ide</span>
+                            <span class="text-muted">${row.impactPct}%</span>
+                        </div>
+                        <div class="report-mini-track mt-1">
+                            <div class="report-mini-fill" style="width: ${row.impactPct}%; background: var(--q2-blue);"></div>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            const quadRowsHtml = rep.quadrants.map(q => `
+                <tr>
+                    <td>
+                        <div class="fw-semibold small" style="color: var(--stokin-text-primary);">${escapeHtml(q.title)}</div>
+                        <small class="text-muted" style="font-size: 0.7rem;">${escapeHtml(q.criteria)}</small>
+                    </td>
+                    <td class="text-center">
+                        <span class="fw-bold" style="color: var(--stokin-text-primary); font-variant-numeric: tabular-nums;">${q.count}</span>
+                        <small class="text-muted d-block" style="font-size: 0.7rem;">${q.pct}%</small>
+                    </td>
+                    <td class="text-center">
+                        <span class="fw-bold" style="color: var(--stokin-text-primary); font-variant-numeric: tabular-nums;">${q.sumScore}</span>
+                        <small class="text-muted d-block" style="font-size: 0.7rem;">avg ${q.avgScoreText}</small>
+                    </td>
+                </tr>
+            `).join('');
+
+            const totalScoreChips = rep.totalScoreDistribution
+                .filter(d => d.count > 0)
+                .map(d => `
+                    <span class="report-score-chip">
+                        <strong>Skor ${d.totalScore}/10</strong>
+                        <span>${d.count} ide (${d.pct}%)</span>
+                    </span>
+                `).join('');
+
+            container.innerHTML = `
+                <div class="${showHeader ? 'modern-card' : ''}" id="quantityReportCard-${suffix}">
+                    ${headerHtml}
+                    <div class="${showHeader ? 'p-3 p-md-4' : ''}">
+                        <!-- 4 Metric Totals -->
+                        <div class="row g-2 g-md-3 mb-3">
+                            <div class="col-6 col-lg-3">
+                                <div class="report-summary-tile h-100">
+                                    <div class="report-summary-label">Total Poin Feasibility (X)</div>
+                                    <div class="report-summary-num report-teal-val">${rep.sumFeasibility} <span class="fs-6 fw-semibold text-muted">/ ${rep.maxFeasibility}</span></div>
+                                    <small class="text-muted">Rata-rata ${rep.avgFeasibilityText} dari 5.00</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg-3">
+                                <div class="report-summary-tile h-100">
+                                    <div class="report-summary-label">Total Poin Impact (Y)</div>
+                                    <div class="report-summary-num report-blue-val">${rep.sumImpact} <span class="fs-6 fw-semibold text-muted">/ ${rep.maxImpact}</span></div>
+                                    <small class="text-muted">Rata-rata ${rep.avgImpactText} dari 5.00</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg-3">
+                                <div class="report-summary-tile h-100">
+                                    <div class="report-summary-label">Akumulasi Total Skor</div>
+                                    <div class="report-summary-num" style="color: var(--stokin-text-primary);">${rep.sumTotalScore} <span class="fs-6 fw-semibold text-muted">/ ${rep.maxTotalScore}</span></div>
+                                    <small class="text-muted">Rata-rata ${rep.avgTotalScoreText} / 10 (Min ${rep.minScore} - Maks ${rep.maxScore})</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg-3">
+                                <div class="report-summary-tile h-100">
+                                    <div class="report-summary-label">Kuadran Dominan &amp; MVP</div>
+                                    <div class="fw-bold small mt-1 mb-1 text-truncate" style="color: var(--stokin-text-primary);" title="${rep.dominantQuadrant ? escapeHtml(rep.dominantQuadrant.shortLabel) : '-'}">
+                                        ${rep.dominantQuadrant ? `${escapeHtml(rep.dominantQuadrant.shortLabel)} (${rep.dominantQuadrant.count})` : '-'}
+                                    </div>
+                                    <small class="text-muted d-block text-truncate" title="${rep.topIdea ? escapeHtml(rep.topIdea.name) : '-'}">
+                                        MVP #1: ${rep.topIdea ? `${escapeHtml(rep.topIdea.name)} (${rep.topIdea.totalScore}/10)` : '-'}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quantity Breakdown Tables -->
+                        <div class="row g-3">
+                            <div class="col-12 col-lg-6">
+                                <div class="p-3 rounded-3 border h-100" style="background: var(--stokin-card-subtle); border-color: var(--stokin-border) !important;">
+                                    <h3 class="h6 fw-bold mb-2 d-flex align-items-center gap-2" style="color: var(--stokin-text-primary); font-size: 0.9rem;">
+                                        <i class="bi bi-sliders2" style="color: var(--stokin-teal-600);"></i>
+                                        <span>Quantity per Nilai Skala (1-5)</span>
+                                    </h3>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm mb-0 report-dist-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Skala</th>
+                                                    <th>Qty Feasibility (X)</th>
+                                                    <th>Qty Impact (Y)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>${scaleRowsHtml}</tbody>
+                                        </table>
+                                    </div>
+                                    <div class="mt-3 pt-2 border-top" style="border-color: var(--stokin-border) !important;">
+                                        <div class="small fw-semibold mb-2" style="color: var(--stokin-text-secondary);">Quantity per Total Skor (X + Y):</div>
+                                        <div class="d-flex flex-wrap gap-2">${totalScoreChips}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-lg-6">
+                                <div class="p-3 rounded-3 border h-100" style="background: var(--stokin-card-subtle); border-color: var(--stokin-border) !important;">
+                                    <h3 class="h6 fw-bold mb-2 d-flex align-items-center gap-2" style="color: var(--stokin-text-primary); font-size: 0.9rem;">
+                                        <i class="bi bi-pie-chart-fill text-primary"></i>
+                                        <span>Quantity Ide &amp; Akumulasi per Kuadran</span>
+                                    </h3>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm mb-0 report-dist-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Kuadran</th>
+                                                    <th class="text-center">Quantity</th>
+                                                    <th class="text-center">Total Poin</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>${quadRowsHtml}</tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        container.querySelectorAll('[data-rep-action]').forEach(btn => {
+            btn.addEventListener('click', function () {
+                runReportExportAction(this.getAttribute('data-rep-action'), list, notify);
+            });
+        });
+
+        return rep;
+    }
+
+    function ensureReportModalMarkup() {
+        if (document.getElementById('stokinReportModal')) return;
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = `
+            <div class="modal fade" id="stokinReportModal" tabindex="-1" aria-labelledby="stokinReportModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-fullscreen-sm-down modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content border shadow-elevated" style="border-radius: var(--radius-lg); border-color: var(--stokin-border) !important;">
+                        <div class="modal-header" style="border-bottom: 1px solid var(--stokin-border);">
+                            <div class="d-flex align-items-center gap-2 min-w-0">
+                                <div class="rounded-3 d-flex align-items-center justify-content-center stokin-teal-chip flex-shrink-0" style="width: 38px; height: 38px;">
+                                    <i class="bi bi-clipboard-data-fill fs-5"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <h5 class="modal-title h6 mb-0 fw-bold" id="stokinReportModalLabel" style="color: var(--stokin-text-primary);">
+                                        Laporan Hasil &amp; Quantity Nilai Ide
+                                    </h5>
+                                    <small class="text-muted" style="font-size: 0.74rem;">
+                                        Rekapitulasi nilai lengkap siap cetak atau ekspor ke Excel/HTML/PDF
+                                    </small>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                        </div>
+                        <div class="modal-body p-3 p-md-4" id="stokinReportModalBody"></div>
+                        <div class="modal-footer" style="border-top: 1px solid var(--stokin-border);">
+                            <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal" style="border-radius: 9px; min-height: 40px; color: var(--stokin-text-secondary); border-color: var(--stokin-border);">
+                                Tutup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(wrapper.firstElementChild);
+    }
+
+    // ==========================================
     // THEME HELPER
     // ==========================================
     function getSavedTheme() {
@@ -632,6 +1384,7 @@ Scan barcode kamera HP, 5, 4</div>
 
         bindThemeToggle(onThemeChange, notify);
         ensureLkpdModalMarkup();
+        ensureReportModalMarkup();
 
         // -------------------------------
         // A. Single Add / Edit Modal (#ideaModal)
@@ -1273,17 +2026,52 @@ Scan barcode kamera HP, 5, 4</div>
             modalInstance.show();
         }
 
-        // Hubungkan tombol header "Revisi & Muat LKPD" dan tombol di Empty State
+        function openReportModal() {
+            const modalEl = document.getElementById('stokinReportModal');
+            const bodyEl = document.getElementById('stokinReportModalBody');
+            if (!modalEl || !bodyEl) return;
+            renderQuantityReportSection(bodyEl, getIdeas(), {
+                notify: notify,
+                hideHeader: true,
+                idSuffix: 'modal'
+            });
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        }
+
+        const reportActionBindings = [
+            ['btnExportReportCSV', 'csv'],
+            ['btnExportReportHTML', 'html'],
+            ['btnPrintReport', 'print'],
+            ['btnCopyReport', 'copy']
+        ];
+        reportActionBindings.forEach(([elId, act]) => {
+            const btn = document.getElementById(elId);
+            if (btn) {
+                btn.addEventListener('click', function () {
+                    runReportExportAction(act, getIdeas(), notify);
+                });
+            }
+        });
+
+        // Hubungkan tombol header "Revisi & Muat LKPD", tombol Empty State, dan pemicu Laporan
         const btnLoadDefault = document.getElementById('btnLoadDefault');
         const btnLoadDefaultEmpty = document.getElementById('btnLoadDefaultEmpty');
         if (btnLoadDefault) btnLoadDefault.addEventListener('click', openLkpdModal);
         if (btnLoadDefaultEmpty) btnLoadDefaultEmpty.addEventListener('click', openLkpdModal);
+        document.querySelectorAll('.js-open-report-modal').forEach(btn => {
+            btn.addEventListener('click', openReportModal);
+        });
 
         // Listener sinkronisasi antar-tab
         window.addEventListener('storage', function (e) {
             if (e.key === STORAGE_KEY) {
                 setIdeas(loadIdeas());
                 onDataChanged();
+                const repModal = document.getElementById('stokinReportModal');
+                const repBody = document.getElementById('stokinReportModalBody');
+                if (repModal && repModal.classList.contains('show') && repBody) {
+                    renderQuantityReportSection(repBody, getIdeas(), { notify: notify, hideHeader: true, idSuffix: 'modal' });
+                }
             } else if (e.key === PRESET_STORAGE_KEY && lkpdModalEl && lkpdModalEl.classList.contains('show')) {
                 draftPreset = loadPreset().map(item => ({ ...item }));
                 renderLkpdEditorRows();
@@ -1298,7 +2086,8 @@ Scan barcode kamera HP, 5, 4</div>
                 bootstrap.Modal.getOrCreateInstance(ideaModalEl).show();
             },
             openEditModal: openEditModal,
-            openLkpdModal: openLkpdModal
+            openLkpdModal: openLkpdModal,
+            openReportModal: openReportModal
         };
     }
 
@@ -1316,6 +2105,14 @@ Scan barcode kamera HP, 5, 4</div>
         parseBulkIdeas,
         exportIdeasToCsv,
         exportPresetToJson,
+        computeIdeasReport,
+        exportReportToCsv,
+        exportReportToHtml,
+        buildReportHtmlDocument,
+        buildReportPlainText,
+        copyReportSummary,
+        printReport,
+        renderQuantityReportSection,
         getSavedTheme,
         applyTheme,
         animateValue,

@@ -935,11 +935,47 @@
                             </ul>
                         </div>
 
-                        <!-- Export CSV -->
-                        <button id="btnExportCSV" type="button" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" style="border-radius: 8px; color: var(--stokin-text-secondary); border-color: var(--stokin-border);">
-                            <i class="bi bi-download"></i>
-                            <span>Export CSV</span>
-                        </button>
+                        <!-- Export Dropdown (Laporan Lengkap & CSV Mentah) -->
+                        <div class="dropdown">
+                            <button class="btn-modern-primary btn-sm dropdown-toggle d-inline-flex align-items-center gap-1"
+                                type="button" id="exportDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 8px;">
+                                <i class="bi bi-download"></i>
+                                <span>Export Hasil</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="exportDropdownBtn" style="font-size: 0.84rem; min-width: 230px;">
+                                <li>
+                                    <button type="button" id="btnExportReportCSV" class="dropdown-item d-flex align-items-center gap-2">
+                                        <i class="bi bi-file-earmark-spreadsheet text-success"></i>
+                                        <span>Export Laporan Quantity (CSV)</span>
+                                    </button>
+                                </li>
+                                <li>
+                                    <button type="button" id="btnExportReportHTML" class="dropdown-item d-flex align-items-center gap-2">
+                                        <i class="bi bi-filetype-html" style="color: var(--stokin-teal-600);"></i>
+                                        <span>Unduh Dokumen Laporan (HTML)</span>
+                                    </button>
+                                </li>
+                                <li>
+                                    <button type="button" id="btnPrintReport" class="dropdown-item d-flex align-items-center gap-2">
+                                        <i class="bi bi-printer" style="color: var(--stokin-teal-600);"></i>
+                                        <span>Cetak / Simpan PDF</span>
+                                    </button>
+                                </li>
+                                <li>
+                                    <button type="button" id="btnCopyReport" class="dropdown-item d-flex align-items-center gap-2">
+                                        <i class="bi bi-clipboard-check"></i>
+                                        <span>Salin Ringkasan Teks</span>
+                                    </button>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <button type="button" id="btnExportCSV" class="dropdown-item d-flex align-items-center gap-2">
+                                        <i class="bi bi-table"></i>
+                                        <span>Export CSV Daftar Ide Saja</span>
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
@@ -1010,6 +1046,11 @@
                 </div>
 
             </div>
+        </section>
+
+        <!-- QUANTITY REPORT SECTION -->
+        <section aria-label="Laporan Hasil dan Quantity Nilai Ide" class="mb-4">
+            <div id="quantityReportContainer"></div>
         </section>
 
         <!-- BOTTOM NAVIGATION SHORTCUT -->
@@ -1450,6 +1491,12 @@
         function renderAll() {
             renderStats();
             renderTable();
+            if (window.StokIn && window.StokIn.renderQuantityReportSection) {
+                window.StokIn.renderQuantityReportSection('#quantityReportContainer', ideas, {
+                    notify: showNotification,
+                    idSuffix: 'daftar'
+                });
+            }
         }
 
         function applyFilter(quadrantKey) {
